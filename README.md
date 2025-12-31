@@ -1,3 +1,11 @@
+# TO DO 
+# * Correct DB URI for mongoDB
+# * npx prisma db push
+# * npx prisma db seed
+
+
+
+
 # Mini Bank Web App
 
 
@@ -18,4 +26,22 @@ Your project is live at:
 
 Create and modify the project using (https://v0.app)
 
-Deploy your project to vercel
+Here are the Admin/SuperAdmin credentials:
+
+📧 Test Accounts:
+-------------------
+SUPERADMIN:
+  Email: superadmin@bank.com
+  Password: superadmin123
+
+ADMIN:
+  Email: admin@bank.com
+  Password: admin123
+
+MANAGER:
+  Email: manager@bank.com
+  Password: manager123
+
+USER:
+  Email: john@example.com
+  Password: user123

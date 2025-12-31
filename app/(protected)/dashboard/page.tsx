@@ -210,19 +210,19 @@ export default function DashboardPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Link href="/accounts" className="block">
+            <Link href="/dashboard/accounts" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <CreditCard className="h-4 w-4 mr-2" />
                 View Accounts
               </Button>
             </Link>
-            <Link href="/transactions" className="block">
+            <Link href="/dashboard/transactions" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <TrendingUp className="h-4 w-4 mr-2" />
                 View Transactions
               </Button>
             </Link>
-            <Link href="/accounts?action=create" className="block">
+            <Link href="/dashboard/accounts?action=create" className="block">
               <Button className="w-full justify-start">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Create Account

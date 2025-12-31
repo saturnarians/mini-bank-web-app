@@ -7,7 +7,7 @@ import { useAppSelector, useAppDispatch } from '@/lib/hooks';
 import { logoutUser } from '@/lib/slices/auth-slice';
 import { LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut, Menu, X, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { hasPermission } from '@/lib/utils/permission';
+import { hasPermission } from '@/lib/permission';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -31,17 +31,17 @@ export function AppSidebar() {
     },
     {
       label: 'Accounts',
-      href: '/accounts',
+      href: '/dashboard/accounts',
       icon: CreditCard,
       permission: 'manage_accounts',
     },
     {
       label: 'Transactions',
-      href: '/transactions',
+      href: '/dashboard/transactions',
       icon: TrendingUp,
       permission: 'manage_transactions',
     },
-    ...(user?.role === 'admin' ? [{
+    ...(user?.role === 'admin' || user?.role === 'superadmin' ? [{
       label: 'Admin Panel',
       href: '/admin',
       icon: Users,
@@ -49,7 +49,7 @@ export function AppSidebar() {
     }] : []),
     {
       label: 'Profile',
-      href: '/profile',
+      href: '/dashboard/profile',
       icon: Settings,
       permission: 'view_profile',
     },

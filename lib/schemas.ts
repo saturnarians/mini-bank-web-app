@@ -33,7 +33,7 @@ export const userSchema = z.object({
   name: z.string().min(2),
   phone: z.string().optional(),
   address: z.string().optional(),
-  role: z.enum(['admin', 'manager', 'user']),
+  role: z.enum(['superadmin', 'admin', 'manager', 'user']),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

@@ -1,0 +1,106 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+*.log
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+*.pem
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.history/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Local env files
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# IDE specific files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# OS specific
+Thumbs.db
+desktop.ini
+
+# Package managers
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+
+# Cache files
+.eslintcache
+.stylelintcache
+.babel-cache/
+
+# Runtime data
+dump.rdb
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# dotenv environment variables file
+.env.*.local
+
+# Runtime
+node_modules/
+dist
+build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md

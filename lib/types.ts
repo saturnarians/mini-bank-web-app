@@ -1,6 +1,6 @@
 // Type definitions for the banking application
 
-export type UserRole = 'admin' | 'manager' | 'user';
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'user';
 
 export interface User {
   id: string;

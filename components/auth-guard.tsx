@@ -4,7 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/lib/hooks';
 import { getCurrentUser } from '@/lib/slices/auth-slice';
-import { canAccessPage } from '@/lib/utils/permission';
+import { canAccessPage } from '@/lib/permission';
 import { Spinner } from '@/components/ui/spinner';
 
 interface AuthGuardProps {

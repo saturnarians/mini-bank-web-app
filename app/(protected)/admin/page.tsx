@@ -16,9 +16,10 @@ import { Button } from '@/components/ui/button';
 import { UserTable } from '@/components/user-table';
 import { UserDialog } from '@/components/user-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, AlertCircle, Users, Shield } from 'lucide-react';
+import { Plus, AlertCircle, Users, Shield, Crown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { canAccessAdmin } from '@/lib/permission';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -30,9 +31,9 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Redirect non-admin users
+  // Redirect users without admin access
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    if (currentUser && !canAccessAdmin(currentUser.role)) {
       router.push('/dashboard');
     }
   }, [currentUser, router]);
@@ -88,9 +89,11 @@ export default function AdminPage() {
     }
   };
 
+  const superAdmins = users.filter(u => u.role === 'superadmin').length;
   const admins = users.filter(u => u.role === 'admin').length;
   const managers = users.filter(u => u.role === 'manager').length;
   const regularUsers = users.filter(u => u.role === 'user').length;
+  const canManageAdmins = currentUser?.role === 'superadmin';
 
   return (
     <div className="space-y-6">
@@ -115,7 +118,7 @@ export default function AdminPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -128,6 +131,24 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
+
+        {canManageAdmins && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Super Admins</span>
+                <Crown className="h-4 w-4 text-purple-600" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <p className="text-2xl font-bold">{superAdmins}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="pb-3">

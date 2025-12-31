@@ -30,7 +30,7 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: 'john@example.com',
-      password: 'password123',
+      password: 'password123', 
     },
   });
 
@@ -41,7 +41,7 @@ export function LoginForm() {
         router.push('/dashboard');
       }
     } catch (err) {
-      console.error('[v0] Login error:', err);
+      console.error(' Login error:', err);
     }
   }
 
