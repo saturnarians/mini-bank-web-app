@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchTransactions,
   createTransaction,
-} from '@/lib/slices/transactions-slice';
+} from '@/store/slices/transactions-slice';
 import { TransactionFormData } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TransactionTable } from '@/components/transaction-table';
-import { TransactionDialog } from '@/components/transaction-dialog';
-import { TransactionFilters } from '@/components/transaction-filters';
+import { TransactionTable } from '@/components/user/transaction-table';
+import { TransactionDialog } from '@/components/user/transaction-dialog';
+import { TransactionFilters } from '@/components/user/transaction-filters';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';

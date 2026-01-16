@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { AuthGuard } from '@/components/auth-guard';
-import { AppSidebar } from '@/components/app-sidebar';
-import { DashboardHeader } from '@/components/dashboard-header';
+import { AppSidebar } from '@/components/shared/app-sidebar';
+import { DashboardHeader } from '@/components/shared/dashboard-header';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Mini Bank',

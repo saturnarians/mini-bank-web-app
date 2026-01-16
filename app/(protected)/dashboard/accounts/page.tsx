@@ -1,20 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchAccounts,
   createAccount,
   updateAccount,
   deleteAccount,
   selectAccount,
-} from '@/lib/slices/accounts-slice';
+} from '@/store/slices/accounts-slice';
 import { Account } from '@/lib/types';
 import { AccountFormData } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AccountCard } from '@/components/account-card';
-import { AccountDialog } from '@/components/account-dialog';
+import { AccountCard } from '@/components/user/account-card';
+import { AccountDialog } from '@/components/user/account-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';

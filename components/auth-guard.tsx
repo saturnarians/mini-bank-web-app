@@ -1,45 +1,38 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-import { getCurrentUser } from '@/lib/slices/auth-slice';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { getCurrentUser } from '@/store/slices/auth-slice';
 import { canAccessPage } from '@/lib/permission';
-import { Spinner } from '@/components/ui/spinner';
 
-interface AuthGuardProps {
-  children: ReactNode;
-  requiredPage?: string;
-}
-
-export function AuthGuard({ children, requiredPage = '/' }: AuthGuardProps) {
+export function AuthGuard({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
 
   useEffect(() => {
+    // Only fetch if we aren't authenticated and not already loading
     if (!isAuthenticated && !isLoading) {
-      dispatch(getCurrentUser()).catch(() => {
-        router.push('/');
-      });
+      dispatch(getCurrentUser());
     }
-  }, []);
+  }, [isAuthenticated, isLoading, dispatch]);
 
   useEffect(() => {
-    if (user && !canAccessPage(user.role, requiredPage)) {
+    // If loading is done and we are still not authenticated, go home
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+
+    // Role-based redirect
+    if (user && !canAccessPage(user.role, pathname)) {
       router.push('/dashboard');
     }
-  }, [user, requiredPage, router]);
+  }, [user, isAuthenticated, isLoading, pathname, router]);
 
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Spinner className="h-8 w-8 mx-auto" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   return <>{children}</>;

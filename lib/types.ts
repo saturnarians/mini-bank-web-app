@@ -2,16 +2,6 @@
 
 export type UserRole = 'superadmin' | 'admin' | 'manager' | 'user';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  phone?: string;
-  address?: string;
-  createdAt: string;
-}
-
 export interface Account {
   id: string;
   userId: string;
@@ -23,6 +13,18 @@ export interface Account {
   createdAt: string;
   lastTransactionAt?: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  phone?: string;
+  address?: string;
+  accounts?: Account[];
+  createdAt: string;
+}
+
 
 export interface Transaction {
   id: string;

@@ -2,23 +2,34 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useAppDispatch, useAppSelector } from '@/lib/hooks';
-import { fetchAccounts } from '@/lib/slices/accounts-slice';
-import { fetchTransactions } from '@/lib/slices/transactions-slice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAccounts } from '@/store/slices/accounts-slice';
+import { fetchTransactions } from '@/store/slices/transactions-slice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-} from 'recharts';
-import { CreditCard, TrendingUp, Wallet, ArrowUpRight } from 'lucide-react';
+// import {
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip,
+//   ResponsiveContainer,
+//   BarChart,
+//   Bar,
+// } from 'recharts';
+import { 
+  CreditCard, 
+  TrendingUp, 
+  Wallet, 
+  ArrowUpRight, 
+  // BanknoteArrowDown,
+  HandCoins, 
+  Landmark,
+  Banknote,
+} from 'lucide-react';
+import { AccountCarousel } from '@/components/user/dashboard/account-carousel';
+import { RecentTransactions } from '@/components/user/dashboard/recent-transactions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
@@ -37,19 +48,19 @@ export default function DashboardPage() {
   const recentTransactions = transactions.slice(0, 5);
 
   // Generate mock chart data
-  const chartData = Array.from({ length: 7 }).map((_, i) => ({
-    day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-    balance: Math.floor(Math.random() * 20000) + 5000,
-    transactions: Math.floor(Math.random() * 15) + 2,
-  }));
+  // const chartData = Array.from({ length: 7 }).map((_, i) => ({
+  //   day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+  //   balance: Math.floor(Math.random() * 20000) + 5000,
+  //   transactions: Math.floor(Math.random() * 15) + 2,
+  // }));
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="glass shadow-custom">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
+            <CardTitle className="text-sm font-medium ">Total Balance</CardTitle>
           </CardHeader>
           <CardContent>
             {accountsLoading ? (
@@ -57,16 +68,16 @@ export default function DashboardPage() {
             ) : (
               <>
                 <p className="text-2xl font-bold">${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p className="text-xs text-muted-foreground mt-1">Across all accounts</p>
+                <p className="text-xs  mt-1">Across all accounts</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass shadow-custom">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Active Accounts</span>
+              <span className="text-sm font-medium ">Active Accounts</span>
               <CreditCard className="h-4 w-4 text-primary" />
             </CardTitle>
           </CardHeader>
@@ -76,16 +87,16 @@ export default function DashboardPage() {
             ) : (
               <>
                 <p className="text-2xl font-bold">{activeAccounts}</p>
-                <p className="text-xs text-muted-foreground mt-1">{accounts.length} total accounts</p>
+                <p className="text-xs  mt-1">{accounts.length} total accounts</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass shadow-custom">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Recent Transactions</span>
+              <span className="text-sm font-medium ">Transactions History</span>
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardTitle>
           </CardHeader>
@@ -95,29 +106,75 @@ export default function DashboardPage() {
             ) : (
               <>
                 <p className="text-2xl font-bold">{transactions.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">This month</p>
+                <p className="text-xs  mt-1">This month</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass shadow-custom">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Account Status</span>
+              <span className="text-sm font-medium ">Account Status</span>
               <Wallet className="h-4 w-4 text-primary" />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">Active</p>
-            <p className="text-xs text-muted-foreground mt-1">All systems operational</p>
+            <p className="text-xs  mt-1">All systems operational</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass shadow-custom">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <span className="text-sm font-medium ">Same Bank Transfer</span>
+              <Banknote color="green" size={32} className="h-4 w-4 text-primary"/>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600">Send</p>
+            <p className="text-xs  mt-1">All systems operational</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass shadow-custom">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <span className="text-sm font-medium ">Other Bank Transfer</span>
+             <Landmark color="blue" size={32} className="h-4 w-4 text-primary" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600">Send</p>
+            <p className="text-xs  mt-1">All systems operational</p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass shadow-custom">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between">
+              <span className="text-sm font-medium ">Loans</span>
+               {/* <BanknoteArrowDown size={24} color="#000" /> */}
+               <HandCoins size={24} color="#000" className="h-4 w-4 text-primary relative left-16"/>
+               <Landmark size={24} color="#000" className="h-4 w-4 text-primary"/>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* <p className="text-2xl font-bold text-green-600">Active</p> */}
+            <p className="text-xs  mt-1">All systems operational</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Account carousel (compact account cards) */}
+      <div>
+        <AccountCarousel accounts={accounts} />
+      </div>
+
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+       {/*<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="glass shadow-custom">
           <CardHeader>
             <CardTitle>Balance Trend</CardTitle>
             <CardDescription>Last 7 days balance overview</CardDescription>
@@ -139,9 +196,9 @@ export default function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
 
-        <Card>
+        {/* <Card className="glass shadow-custom">
           <CardHeader>
             <CardTitle>Transaction Activity</CardTitle>
             <CardDescription>Transactions per day</CardDescription>
@@ -157,8 +214,8 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
-      </div>
+        </Card> 
+      </div>*/}
 
       {/* Quick Actions and Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -168,44 +225,11 @@ export default function DashboardPage() {
             <CardDescription>Your latest account activity</CardDescription>
           </CardHeader>
           <CardContent>
-            {transactionsLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : recentTransactions.length > 0 ? (
-              <div className="space-y-3">
-                {recentTransactions.map((txn) => (
-                  <div
-                    key={txn.id}
-                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-background rounded-lg">
-                        <ArrowUpRight className={`h-4 w-4 ${txn.type === 'deposit' ? 'text-green-600' : 'text-red-600'}`} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{txn.description}</p>
-                        <p className="text-xs text-muted-foreground">{txn.reference}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-medium text-sm ${txn.type === 'deposit' ? 'text-green-600' : 'text-red-600'}`}>
-                        {txn.type === 'deposit' ? '+' : '-'}${txn.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-muted-foreground capitalize">{txn.status}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No transactions yet</p>
-            )}
+            <RecentTransactions transactions={recentTransactions} isLoading={transactionsLoading} />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass shadow-custom">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
@@ -223,7 +247,7 @@ export default function DashboardPage() {
               </Button>
             </Link>
             <Link href="/dashboard/accounts?action=create" className="block">
-              <Button className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Create Account
               </Button>

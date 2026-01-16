@@ -1,22 +1,59 @@
-import { Metadata } from 'next';
-import { LoginForm } from '@/components/login-form';
+"use client";
 
-export const metadata: Metadata = {
-  title: 'Login - Mini Bank',
-  description: 'Sign in to your Mini Bank account',
-};
+import { useEffect } from "react"
+import { Navbar } from "@/components/public/nav-section"
+import { Footer } from "@/components/public/footer-section"
+import { AboutSection } from "@/components/public/about-section"
+import { Home } from "@/components/public/home-section";
+import { ContactSection } from "@/components/public/contact-section"
+import { PageWrapper } from "@/components/public/page-wrapper"
+import { useAppSelector, useAppDispatch } from "@/store/hooks"
+// import { setIsMobile } from "@/store/slices/uiSlice"
+import { LoginForm } from '@/components/public/login-form';
+import  LoginPage  from '@/app/(auth)/login/page'
 
-export default function LoginPage() {
+// when you initiate sentry you add un-comment the sentry export below
+//  the codes and remove the export default function MainContent and leave only Main content
+export default function MainContent() {
+  const { currentPage } = useAppSelector((state) => state.navigation)
+  // const dispatch = useAppDispatch()
+
+  // useEffect(() => {
+  //   // Set up mobile detection
+  //   const handleResize = () => {
+  //     dispatch(setIsMobile(window.innerWidth < 768))
+  //   }
+
+  //   handleResize()
+  //   window.addEventListener("resize", handleResize)
+  //   return () => window.removeEventListener("resize", handleResize)
+  // }, [dispatch])
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* <LoginPage /> */}
+      <div className="w-full flex flex-col space-y-26 min-h-screen">
+        <Navbar />
+        <main className="flex-1 w-auto mx-auto max-w-full px-2 md:px-4 py-8"> 
+          <PageWrapper isActive={currentPage === "home"}>
+            <Home />
+          </PageWrapper>
 
-      <div className="relative z-10 bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8">
-        <LoginForm />
+          <PageWrapper isActive={currentPage === "about"}>
+            <AboutSection />
+          </PageWrapper>
+
+          <PageWrapper isActive={currentPage === "contact"}>
+            <ContactSection />
+          </PageWrapper>
+
+          <PageWrapper isActive={currentPage === "login"}>
+            <LoginForm />
+          </PageWrapper>
+        </main>
+        <Footer />
       </div>
+     {/* </div> */}
     </div>
-  );
+  )
 }

@@ -15,14 +15,35 @@ export const registerSchema = z.object({
   path: ['confirmPassword'],
 });
 
+//Account
 export const accountSchema = z.object({
   accountNumber: z.string().min(10, 'Account number must be at least 10 characters'),
   accountType: z.enum(['checking', 'savings', 'investment']),
-  initialBalance: z.number().min(0, 'Balance cannot be negative').default(0),
+  initialBalance: z.coerce.number().min(0, 'Balance cannot be negative'),
+  status: z.enum(['active', 'suspended', 'closed']).default('active'),
 });
 
+// 2. The Creation Schema (What the user sends in the POST request)
+// We "pick" only the fields the user is allowed to set manually
+export const createAccountSchema = accountSchema.pick({
+  accountType: true,
+  initialBalance: true, // Now balance is officially included!
+});
+
+// 3. The Update Schema (Optional fields for PATCH)
+export const updateAccountSchema = createAccountSchema.partial();
+
+// 4. Special Action Schemas
+export const suspendAccountSchema = z.object({
+  reason: z.string().min(3, 'Please provide a reason')
+});
+
+// Transaction
 export const transactionSchema = z.object({
-  type: z.enum(['deposit', 'withdrawal', 'transfer']),
+  type: z.enum([
+    'deposit',
+     'withdrawal',
+     'transfer']),
   amount: z.number().positive('Amount must be greater than 0'),
   description: z.string().min(1, 'Description is required'),
   recipientAccountId: z.string().optional(),
