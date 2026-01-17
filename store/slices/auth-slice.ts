@@ -13,6 +13,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  hydrated: false,
 };
 
 /**
@@ -223,11 +224,13 @@ export const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthenticated = true;
         state.isLoading = false;
+        state.hydrated = true;
       })
       .addCase(getCurrentUser.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
         state.isLoading = false;
+        state.hydrated = true;
       })
 
       // LOGOUT

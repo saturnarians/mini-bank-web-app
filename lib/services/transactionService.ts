@@ -49,9 +49,9 @@ export const transactionService = {
   },
 
   async listUserTransactions(userId: string) {
-    return prisma.transaction.findMany({
+    return await prisma.transaction.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { timestamp: 'desc' },
       take: 50,
     });
   },
@@ -59,7 +59,8 @@ export const transactionService = {
   async executeTransfer(senderAccountId: string, amount: number) {
     return await prisma.$transaction(async (tx) => {
       
-      // 1. Fetch the sender's account first to check their current balance
+      try {
+        // 1. Fetch the sender's account first to check their current balance
       const account = await tx.account.findUnique({
         where: { id: senderAccountId }
       });
@@ -88,6 +89,11 @@ export const transactionService = {
           balance: { decrement: amount }
         }
       });
-    });
+      }catch (err) {
+  console.error('Transactions fetch failed:', err);
+  return [];
+      }
+    }
+  );
   }
 };

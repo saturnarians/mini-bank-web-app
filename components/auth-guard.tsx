@@ -10,17 +10,17 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading } = useAppSelector(
+  const { user, hydrated, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth
   );
 
    console.log("GUARD CHECK", { isAuthenticated })
   //1. Ensure auth state is hydrated
   useEffect(() => {
-    if (!user && !isLoading) {
+    if (!user && !isLoading && hydrated) {
       dispatch(getCurrentUser());
     }
-  }, [user, isLoading, dispatch]);
+  }, [user, isLoading, dispatch, hydrated]);
 
   //2. Enforce access rules
   useEffect(() => {

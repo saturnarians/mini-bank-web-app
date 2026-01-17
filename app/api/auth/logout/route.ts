@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server';
 import { removeTokenCookie } from '@/lib/auth';
 
 export async function POST() {
-  // 1. Call the 
-  const response =  NextResponse.json({ message: 'Logged out successfully' })
-  // 2. Clear the cookie for server-side headers
-  await removeTokenCookie();
-  
+
+  // 1. Create response
   const response = NextResponse.json(
     { message: 'Logged out successfully' },
     { status: 200 }
   );
+
+   // 2. Clear the cookie for server-side headers
+  await removeTokenCookie(response);
 
   // 3. Explicitly expire the cookie on the response object
   // response.cookies.set('token', '', {
