@@ -2,36 +2,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authController } from '@/lib/controllers/authController';
 import { ZodError } from 'zod';
-import { signToken, setTokenCookie } from '@/lib/auth';
+import { setTokenCookie } from '@/lib/auth';
+import { loginSchema } from '@/lib/schemas';
+
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const user = await authController.login(body);
 
-    const token = await signToken({ 
-    id: user.id, 
-    email: user.email, 
-    role: user.role 
-  });
+const body = loginSchema.parse(await request.json());
+const { user, token , expiresIn } = await authController.login(body);
 
-  await setTokenCookie(token);
+ // Validate user
+if (!user) {
+  return NextResponse.json(
+    { error: 'Invalid email or password' },
+    { status: 401 }
+  ); 
+}
   
+// Create A response
+const response = NextResponse.json({ user }, {status: 200});
 
-const response = NextResponse.json({
-  user: { id: user.id, email: user.email, name: user.name, role: user.role }
-});
+setTokenCookie(response, token, expiresIn );
 
-// THIS IS THE CRITICAL PART
-response.cookies.set('session', token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  maxAge: 60 * 60 * 24 * 7, // 1 week
-  path: '/',
-});
-
-    return NextResponse.json({ user });
+    return response;
   } catch (error: any) {
     // Specific error handling
     if (error instanceof ZodError) {
@@ -39,10 +33,16 @@ response.cookies.set('session', token, {
     }
     
     if (error.message === 'INVALID_CREDENTIALS') {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
     console.error("Login Error:", error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 };

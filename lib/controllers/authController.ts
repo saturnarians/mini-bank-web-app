@@ -1,37 +1,74 @@
 // lib/controllers/authController.ts
-import prisma from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { signToken, setTokenCookie } from '@/lib/auth';
-import { loginSchema } from '@/lib/schemas';
+import { authService } from '@/lib/services/authService';
+import { loginSchema, registerSchema } from '@/lib/schemas';
+import type { User } from '@/lib/types'; // your user type
+import { ZodError } from 'zod';
+import { signToken, UserRole } from '@/lib/auth';
+
+interface AuthResponseDTO {
+  user: User;
+  token: string;
+  expiresIn?: number;
+}
 
 export const authController = {
-  async login(body: any) {
-    // 1. Validate input
-    const { email, password } = loginSchema.parse(body);
+  /**
+   * Registers a new user
+   * Returns the flat user object directly (no { user } nesting)
+   */
+  async register(body: unknown): Promise<AuthResponseDTO> {
+    try {
+      const data = registerSchema.parse(body);
 
-    // 2. Find user
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new Error('INVALID_CREDENTIALS');
+      // authService.register should return User directly
+      const user = await authService.register(data);
 
-    // 3. Verify password
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) throw new Error('INVALID_CREDENTIALS');
+      if (!user) throw new Error('Registration failed');
 
-    // 4. Generate & Set Token
+      const expiresIn = 20 * 60; // 20 minutes
+
     const token = await signToken({
       id: user.id,
+      name: user.name,
       email: user.email,
-      role: user.role, // <--- Role enters the JWT system here
+      role: user.role as UserRole,
+      emailVerified: user.emailVerified,
     });
 
-    await setTokenCookie(token);
+      return {user, token, expiresIn}; // flat user
 
-    // 5. Return sanitized user data
-    return {
+    } catch (err) {
+      if (err instanceof ZodError) throw err; // validation error
+      throw err;
+    }
+  },
+
+  /**
+   * Logs in a user
+   * Returns the flat user object directly (no { user } nesting)
+   */
+  async login(body: unknown): Promise<AuthResponseDTO> {
+    try {
+      const data = loginSchema.parse(body);
+
+      const user = await authService.login(data);
+
+      if (!user) throw new Error('Invalid credentials');
+
+      const expiresIn = 20 * 60; // 20 minutes
+      
+      const token = await signToken({
       id: user.id,
-      email: user.email,
       name: user.name,
-      role: user.role,
-    };
-  }
+      email: user.email,
+      role: user.role as UserRole,
+      emailVerified: user.emailVerified,
+    });
+
+      return { user, token, expiresIn }; // flat user
+    } catch (err) {
+      if (err instanceof ZodError) throw err;
+      throw err;
+    }
+  },
 };

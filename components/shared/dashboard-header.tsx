@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { name: 'Dashboard', href: '/dashboard' },
   { name: 'Accounts', href: '/accounts' },
   { name: 'Transactions', href: '/transactions' },
-  { name: 'Admin Panel', href: '/admin' }, // Sensitive link
+  { name: 'Admin Panel', href: '/admin-panel' }, // Sensitive link
 ];
 
 export function DashboardHeader() {

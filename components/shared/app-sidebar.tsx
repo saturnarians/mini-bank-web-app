@@ -43,7 +43,7 @@ export function AppSidebar() {
     },
     ...(user?.role === 'admin' || user?.role === 'superadmin' ? [{
       label: 'Admin Panel',
-      href: '/admin',
+      href: '/admin-panel',
       icon: Users,
       permission: 'manage_users',
     }] : []),

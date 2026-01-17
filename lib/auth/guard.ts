@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSessionFromCookies } from '@/lib/auth';
 import { ZodError } from 'zod';
 
 type ProtectedHandler = (
@@ -10,7 +10,7 @@ type ProtectedHandler = (
 export function authorize(roles: string[], handler: ProtectedHandler) {
   return async (req: NextRequest, context: any) => {
     try {
-      const session = await getSession();
+      const session = await getSessionFromCookies();
 
       // 1. Auth Check
       if (!session) {

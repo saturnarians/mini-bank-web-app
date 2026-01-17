@@ -1,6 +1,5 @@
-// Type definitions for the banking application
 
-export type UserRole = 'superadmin' | 'admin' | 'manager' | 'user';
+export type UserRole = 'superadmin' | 'admin' | 'user'; // 'manager' 
 
 export interface Account {
   id: string;
@@ -19,6 +18,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  emailVerified: boolean;
   phone?: string;
   address?: string;
   accounts?: Account[];

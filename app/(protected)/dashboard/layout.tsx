@@ -13,7 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthGuard requiredPage="/dashboard">
+     <AuthGuard> // // requiredPage="/dashboard"
       <div className="flex bg-background">
         <AppSidebar />
         <div className="flex-1 md:ml-0">

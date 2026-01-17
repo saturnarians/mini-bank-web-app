@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
+import { resolveDashboardByRole } from '@/lib/route-resolver';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginUser, clearError } from '@/store/slices/auth-slice';
 import {
@@ -35,15 +36,14 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormData) {
-    try {
-      const result = await dispatch(loginUser(values)).unwrap();
-      if (result) {
-        router.push('/dashboard');
-      }
-    } catch (err) {
-      console.error(' Login error:', err);
-    }
+  try {
+    const user = await dispatch(loginUser(values)).unwrap();
+    const redirectTo = resolveDashboardByRole(user.role);
+    router.replace(redirectTo);
+  } catch (err) {
+    console.error("Login error:", err);
   }
+}
 
   return (
     <div className="w-full max-w-md space-y-6">

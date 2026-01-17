@@ -1,18 +1,20 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/store/slices/auth-slice'; // Your auth logic
+'use client';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
+import { ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppSelector } from '@/store/hooks';
 
-  // If they aren't an admin or superadmin, send them to the user dashboard
-  if (user.role !== 'admin' && user.role !== 'superadmin') {
-    redirect('/user'); 
-  }
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const { user, isLoading } = useAppSelector(state => state.auth);
 
-  return (
-    <section>
-      <nav>Admin Navbar (User Management, Suspension)</nav>
-      {children}
-    </section>
-  );
+  useEffect(() => {
+    if (!isLoading && (!user || !['admin', 'superadmin'].includes(user.role))) {
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  if (!user) return null;
+
+  return <>{children}</>;
 }

@@ -1,38 +1,55 @@
-'use client';
+"use client";
 
-import { ReactNode, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { getCurrentUser } from '@/store/slices/auth-slice';
-import { canAccessPage } from '@/lib/permission';
+import { ReactNode, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { getCurrentUser } from "@/store/slices/auth-slice";
+import { canAccessPage } from "@/lib/permission";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading } = useAppSelector(state => state.auth);
+  const { user, isAuthenticated, isLoading } = useAppSelector(
+    (state) => state.auth
+  );
 
+   console.log("GUARD CHECK", { isAuthenticated })
+  //1. Ensure auth state is hydrated
   useEffect(() => {
-    // Only fetch if we aren't authenticated and not already loading
-    if (!isAuthenticated && !isLoading) {
+    if (!user && !isLoading) {
       dispatch(getCurrentUser());
     }
-  }, [isAuthenticated, isLoading, dispatch]);
+  }, [user, isLoading, dispatch]);
 
+  //2. Enforce access rules
   useEffect(() => {
-    // If loading is done and we are still not authenticated, go home
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
+// Redirect only after hydration attempt
+if (!isLoading && !user) {
+  router.replace('/login');
+  return;
+}
 
     // Role-based redirect
-    if (user && !canAccessPage(user.role, pathname)) {
-      router.push('/dashboard');
+    //   if (user && !canAccessPage(user.role, pathname)) {
+    //     router.replace('/dashboard');
+    //   }
+
+    if (
+      user &&
+      pathname !== "/dashboard" &&
+      !canAccessPage(user.role, pathname)
+    ) {
+      router.replace("/dashboard");
     }
   }, [user, isAuthenticated, isLoading, pathname, router]);
 
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return <>{children}</>;
