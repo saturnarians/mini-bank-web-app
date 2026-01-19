@@ -8,7 +8,7 @@ import {
   createUser,
   updateUser,
   deleteUser,
-} from '@/lib/slices/users-slice';
+} from '@/store/slices/users-slice';
 import { User } from '@/lib/types';
 import { UserFormData } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, AlertCircle, Users, Shield, Crown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { canAccessAdmin } from '@/lib/permission';
+import { BaseProfile } from "@/components/shared/baseProfile";
+import { canAccessPage } from '@/lib/permission';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function AdminPage() {
 
   // Redirect users without admin access
   useEffect(() => {
-    if (currentUser && !canAccessAdmin(currentUser.role)) {
+    if (currentUser && !canAccessPage(currentUser.role)) {
       router.push('/dashboard');
     }
   }, [currentUser, router]);
@@ -100,8 +101,15 @@ export default function AdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage users and system settings</p>
+          <h1 className="text-3xl font-bold">System Administration</h1>
+          {/* Admin Specific Info Card */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="font-mono text-lg">Welcome, {currentUser?.email}</p>
+        </div>
+        <BaseProfile />
+        {/* Add more admin stats here if needed */}
+       </div>
         </div>
         <Button onClick={() => handleOpenDialog()} size="lg" className="gap-2">
           <Plus className="h-4 w-4" />

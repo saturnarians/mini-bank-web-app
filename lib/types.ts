@@ -1,6 +1,7 @@
+// -------------------- Roles --------------------
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'user';
 
-export type UserRole = 'superadmin' | 'admin' | 'user'; // 'manager' 
-
+// -------------------- Account --------------------
 export interface Account {
   id: string;
   userId: string;
@@ -8,11 +9,23 @@ export interface Account {
   accountType: 'checking' | 'savings' | 'investment';
   balance: number;
   currency: 'USD';
-  status: 'active' | 'inactive' | 'closed';
+  status: 'active' | 'inactive' | 'closed' | 'suspended';
   createdAt: string;
   lastTransactionAt?: string;
+  logs?: AccountLog[];
 }
 
+// -------------------- Account Log --------------------
+export type AccountLog = {
+  id: string;
+  accountId: string;
+  action: string;
+  reason: string | null;
+  performedBy: string;
+  createdAt: string;
+};
+
+// -------------------- User --------------------
 export interface User {
   id: string;
   email: string;
@@ -25,7 +38,7 @@ export interface User {
   createdAt: string;
 }
 
-
+// -------------------- Transaction --------------------
 export interface Transaction {
   id: string;
   accountId: string;
@@ -40,12 +53,13 @@ export interface Transaction {
   reference: string;
 }
 
+// -------------------- Redux States --------------------
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  hydrated: boolean,
+  hydrated: boolean;
 }
 
 export interface AccountsState {
@@ -67,6 +81,8 @@ export interface TransactionsState {
   };
   sortBy: 'date' | 'amount';
   sortOrder: 'asc' | 'desc';
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 export interface UsersState {
@@ -75,6 +91,7 @@ export interface UsersState {
   error: string | null;
 }
 
+// Root state
 export interface RootState {
   auth: AuthState;
   accounts: AccountsState;

@@ -40,8 +40,22 @@ model Account {
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  logs         AccountLog[]
 
   @@index([userId])
+}
+
+model AccountLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  accountId   String   @db.ObjectId // Must match Account.id type
+  action      String   // e.g., "SUSPENDED", "ACTIVATED"
+  reason      String?
+  performedBy String   @db.ObjectId // ID of the admin
+  createdAt   DateTime @default(now())
+
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
 }
 
 model Transaction {
