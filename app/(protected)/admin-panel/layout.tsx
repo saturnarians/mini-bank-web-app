@@ -3,6 +3,8 @@
 import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
+import { AuthGuard } from '@/components/auth-guard';
+import { RoleGuard } from '@/components/roleGuard';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -16,5 +18,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   if (!user) return null;
 
-  return <>{children}</>;
+  return (
+  <AuthGuard> 
+  <RoleGuard>
+  <>
+  {children}
+  </>
+  </RoleGuard>
+  </AuthGuard>
+  )
 }

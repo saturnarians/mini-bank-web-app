@@ -20,7 +20,6 @@ import { Plus, AlertCircle, Users, Shield, Crown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BaseProfile } from "@/components/shared/baseProfile";
-import { canAccessPage } from '@/lib/permission';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -32,12 +31,6 @@ export default function AdminPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Redirect users without admin access
-  useEffect(() => {
-    if (currentUser && !canAccessPage(currentUser.role)) {
-      router.push('/dashboard');
-    }
-  }, [currentUser, router]);
 
   useEffect(() => {
     dispatch(fetchUsers());
@@ -92,7 +85,7 @@ export default function AdminPage() {
 
   const superAdmins = users.filter(u => u.role === 'superadmin').length;
   const admins = users.filter(u => u.role === 'admin').length;
-  const managers = users.filter(u => u.role === 'manager').length;
+  // const managers = users.filter(u => u.role === 'manager').length;
   const regularUsers = users.filter(u => u.role === 'user').length;
   const canManageAdmins = currentUser?.role === 'superadmin';
 
@@ -181,13 +174,13 @@ export default function AdminPage() {
               <Shield className="h-4 w-4 text-blue-600" />
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          {/* <CardContent>
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <p className="text-2xl font-bold">{managers}</p>
             )}
-          </CardContent>
+          </CardContent> */}
         </Card>
 
         <Card>

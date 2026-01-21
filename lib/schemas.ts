@@ -38,6 +38,11 @@ export const suspendAccountSchema = z.object({
   reason: z.string().min(3, 'Please provide a reason')
 });
 
+// Resume Account
+export const resumeAccountSchema = z.object({
+  reason: z.string().min(3, 'Please provide a reason')
+});
+
 // -------------------- Transaction --------------------
 export const transactionSchema = z
   .object({
@@ -81,5 +86,6 @@ export type AccountFormData = z.infer<typeof accountSchema>;       // entity sha
 export type CreateAccountFormData = z.infer<typeof createAccountSchema>; // input shape
 export type UpdateAccountFormData = z.infer<typeof updateAccountSchema>;
 export type SuspendAccountFormData = z.infer<typeof suspendAccountSchema>;
+export type suspendAccountFormData =  z.infer<typeof resumeAccountSchema>;
 export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type UserFormData = z.infer<typeof userSchema>;

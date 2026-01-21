@@ -74,7 +74,7 @@ export const accountService = {
   async suspend(accountId: string, reason: string, adminId: string) {
     return await prisma.$transaction(async (tx) => {
       // 1. Create the Audit Log
-      await tx.accountLog.create({
+      const account = await tx.accountLog.create({
         data: {
           accountId,
           action: "SUSPENDED",
@@ -84,14 +84,48 @@ export const accountService = {
       });
 
       // 2. Update the Account Status
-      const updatedAccount = await tx.account.update({
+      await tx.account.update({
       where: { id: accountId },
       data: { status: "suspended" },
     });
 
-    // return updatedAccount;
+    return account;
+
   });
   },
+
+  // Resume account
+  async resume(accountId: string, reason:string, adminId: string) {
+  //   - verify account exists
+  // - if already active → no-op or error
+  // - update status to "active"
+  // - create AccountLog { action: "RESUMED", reason, performedBy }
+    return await prisma.$transaction(async (tx) => {
+      const account = await tx.account.findUnique({ where: { id: accountId } });
+  
+  // If already active, just return it (no-op) or throw error
+  if (account?.status === "active") return account;
+
+      // 1. Create the Audit Log
+      await tx.accountLog.create({
+        data: {
+          accountId,
+          action: "RESUMED",
+          reason,
+          performedBy: adminId, // ID of the admin from session
+        },
+      });
+      // 2. Update the Account Status
+      const updatedAccount = await tx.account.update({
+        where: { id: accountId },
+        data: { status: "active" },
+      });
+      return updatedAccount;
+    }
+  );
+  },
+  
+
 
   /**
    * List user accounts

@@ -4,7 +4,7 @@ import {
   updateAccountSchema,
   suspendAccountSchema,
 } from "@/lib/schemas";
-
+import { assertAdmin } from "@/lib/auth/auth-utils";
 /**
  * AccountController
  * - Handles validation
@@ -79,6 +79,9 @@ export const accountController = {
     session: { id: string, role: string },
     body: unknown, 
   ) {
+
+    // Use your helper instead of manual if-check
+    assertAdmin(session);
     // 1. Double-check Role (Internal guard)
     if (session.role !== "admin" && session.role !== "superadmin") {
       throw new Error("FORBIDDEN");
@@ -93,6 +96,25 @@ export const accountController = {
 
     // 3. Call the service to suspend and the validated reason
     return accountService.suspend(accountId, reason, session.id);
+  },
+
+  // Resume account
+  async resume(
+    accountId: string,
+    session: { id: string, role: string },
+    body: unknown,
+  ) {
+    if (session.role !== "admin" && session.role !== "superadmin") {
+      throw new Error("FORBIDDEN");
+    }
+
+    const { reason } = suspendAccountSchema.parse(body);
+
+    if (!reason || reason.length < 3) {
+      throw new Error("INVALID_REASON");
+    }
+
+    return accountService.resume(accountId, reason, session.id);
   },
 
   /**

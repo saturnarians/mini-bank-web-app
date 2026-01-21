@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { UsersState, User } from "@/lib/types";
 import type { UserFormData } from "@/lib/schemas";
-import { adminUpdateBalance } from './accounts-slice';
+// import { adminUpdateBalance } from './accounts-slice';
 
 const initialState: UsersState = {
   users: [],
@@ -116,20 +116,22 @@ export const usersSlice = createSlice({
       .addCase(searchUsers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || "Search failed";
-      })
-      .addCase(adminUpdateBalance.fulfilled, (state, action) => {
-      // action.payload is the updated account object from the API
-      const { userId, id: accountId, balance } = action.payload;
+      });
 
-      // Find the user in our list and update their nested account balance
-      const user = state.users.find(u => u.id === userId);
-      if (user && user.accounts) {
-        const account = user.accounts.find(acc => acc.id === accountId);
-        if (account) {
-          account.balance = balance;
-        }
-      }
-    });
+    //   .addCase(adminUpdateBalance.fulfilled, (state, action) => {
+    //   // action.payload is the updated account object from the API
+    //   const { userId, id: accountId, balance } = action.payload;
+
+    //   // Find the user in our list and update their nested account balance
+    //   const user = state.users.find(u => u.id === userId);
+    //   if (user && user.accounts) {
+    //     const account = user.accounts.find(acc => acc.id === accountId);
+    //     if (account) {
+    //       account.balance = balance;
+    //     }
+    //   }
+    // });
+    
   },
 });
 

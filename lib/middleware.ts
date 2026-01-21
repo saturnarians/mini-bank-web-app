@@ -1,6 +1,8 @@
 // middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshSession, signToken } from './auth';
+import { canAccessPage } from './permission';
+import { resolveDashboardByRole } from './route-resolver';
 
 const protectedRoutes = [
   '/dashboard',
@@ -8,7 +10,7 @@ const protectedRoutes = [
   '/transactions',
   '/profile',
   '/admin-panel',
-  '/api/',
+  // '/api/', very bad to protect api in middleware
 ];
 
 export async function middleware(request: NextRequest) {
@@ -24,6 +26,11 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute && !session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
+
+  if (session && !canAccessPage(session.role, pathname)) {
+  return NextResponse.redirect(new URL(resolveDashboardByRole(session.role), request.url));
+}
+
 
   // // 3. Sliding Session Logic: If they are logged in, refresh their token
   // const response = NextResponse.next();

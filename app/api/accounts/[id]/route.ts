@@ -9,9 +9,9 @@ export const GET = authorize(['user', 'admin', 'superadmin'], async (req, { para
 });
 
 // PATCH: Update account
-export const PATCH = authorize(['user', 'admin', 'superadmin'], async (req, { params, session }) => {
+export const PATCH = authorize(['user', 'admin', 'superadmin'], async (req, { params, session }) => { 
   const body = await req.json();
-  const updated = await accountController.update(params.id, body);
+  const updated = await accountController.update(params.id, session, body);
   return NextResponse.json(updated);
 });
 

@@ -1,5 +1,12 @@
 // -------------------- Roles --------------------
-export type UserRole = 'superadmin' | 'admin' | 'manager' | 'user';
+export type UserRole = 'superadmin' | 'admin' | 'user';
+
+//Account Status Types (System intention  )
+export type AccountStatus = 'ACTIVE' | 'SUSPENDED';
+
+// Account Types (Business intention  )
+export type AccountType = 'USER' | 'MERCHANT' | 'ADMIN' | 'SYSTEM';
+
 
 // -------------------- Account --------------------
 export interface Account {
@@ -10,9 +17,12 @@ export interface Account {
   balance: number;
   currency: 'USD';
   status: 'active' | 'inactive' | 'closed' | 'suspended';
-  createdAt: string;
+  createdAt: Date;
   lastTransactionAt?: string;
   logs?: AccountLog[];
+  suspensionAt?: Date;
+  suspensionReason?: string;
+  updatedAt?: Date;
 }
 
 // -------------------- Account Log --------------------

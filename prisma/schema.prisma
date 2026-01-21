@@ -33,7 +33,7 @@ model Account {
   accountType       String        // checking, savings, investment
   balance           Float         @default(0)
   currency          String        @default("USD")
-  status            String        @default("active") // active, inactive, closed
+  status            String        @default("active") // active, inactive, closed, suspended
   createdAt         DateTime      @default(now())
   lastTransactionAt DateTime?
   updatedAt         DateTime      @updatedAt
