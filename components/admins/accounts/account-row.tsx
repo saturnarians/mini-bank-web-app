@@ -1,10 +1,14 @@
-import { Account } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+"use client";
+
+import { useState } from "react";
+import { Account } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import {
   useSuspendAccountMutation,
   useResumeAccountMutation,
-} from '@/store/services/accountsApi';
-import { useAppSelector } from '@/store/hooks';
+} from "@/store/services/accountsApi";
+import { useAppSelector } from "@/store/hooks";
+import { AdjustBalanceDialog } from "./adjustBalanceDialog";
 
 interface AccountRowProps {
   account: Account;
@@ -13,38 +17,43 @@ interface AccountRowProps {
 export default function AccountRow({ account }: AccountRowProps) {
   const { user } = useAppSelector((s) => s.auth);
 
+  /* ================= Local UI State ================= */
+  const [adjustOpen, setAdjustOpen] = useState(false);
+
+  /* ================= API ================= */
   const [suspendAccount, suspendState] = useSuspendAccountMutation();
   const [resumeAccount, resumeState] = useResumeAccountMutation();
 
   /* ================= RBAC ================= */
   const isAdmin =
-    user?.role === 'admin' || user?.role === 'superadmin';
+    user?.role === "admin" || user?.role === "superadmin";
 
   /* ================= State Guards ================= */
-  const canSuspend = isAdmin && account.status === 'active';
-  const canResume = isAdmin && account.status === 'suspended';
+  const canSuspend = isAdmin && account.status === "active";
+  const canResume = isAdmin && account.status === "suspended";
 
-  const isLoading = suspendState.isLoading || resumeState.isLoading;
+  const isLoading =
+    suspendState.isLoading || resumeState.isLoading;
 
   /* ================= Helpers ================= */
   const latestLog = account.logs?.[0];
 
-  const requestReason = (action: 'suspend' | 'resume') => {
+  const requestReason = (action: "suspend" | "resume") => {
     const label =
-      action === 'suspend'
-        ? 'Reason for suspension'
-        : 'Reason for resuming';
+      action === "suspend"
+        ? "Reason for suspension"
+        : "Reason for resuming";
     return prompt(label);
   };
 
   const handleAction = async (
-    action: 'suspend' | 'resume'
+    action: "suspend" | "resume"
   ) => {
     const reason = requestReason(action);
     if (!reason) return;
 
     try {
-      if (action === 'suspend') {
+      if (action === "suspend") {
         await suspendAccount({
           id: account.id,
           reason,
@@ -70,47 +79,54 @@ export default function AccountRow({ account }: AccountRowProps) {
             {account.accountNumber}
           </h3>
           <p className="text-sm text-gray-500">
-            {account.accountType.toUpperCase()} ·{' '}
+            {account.accountType.toUpperCase()} ·{" "}
             {account.currency}
           </p>
         </div>
 
         <span
           className={`text-sm font-medium ${
-            account.status === 'suspended'
-              ? 'text-red-600'
-              : 'text-green-600'
+            account.status === "suspended"
+              ? "text-red-600"
+              : "text-green-600"
           }`}
         >
           {account.status}
         </span>
       </div>
 
-      {/* Suspension / Resume Log */}
-      {account.status === 'suspended' && latestLog && (
+      {/* Suspension Log */}
+      {account.status === "suspended" && latestLog && (
         <div className="bg-red-50 border border-red-200 rounded p-3 text-sm">
           <strong>Reason:</strong> {latestLog.reason}
           <div className="text-xs text-gray-500 mt-1">
-            {new Date(
-              latestLog.createdAt
-            ).toLocaleString()}
+            {new Date(latestLog.createdAt).toLocaleString()}
           </div>
         </div>
       )}
 
       {/* Admin Actions */}
       {isAdmin && (
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
+          {/* Adjust Balance (admin override, always allowed) */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setAdjustOpen(true)}
+          >
+            Adjust Balance
+          </Button>
+
           {canSuspend && (
             <Button
               variant="destructive"
               size="sm"
               disabled={isLoading}
-              onClick={() => handleAction('suspend')}
+              onClick={() => handleAction("suspend")}
             >
               {suspendState.isLoading
-                ? 'Suspending...'
-                : 'Suspend'}
+                ? "Suspending..."
+                : "Suspend"}
             </Button>
           )}
 
@@ -119,14 +135,23 @@ export default function AccountRow({ account }: AccountRowProps) {
               variant="default"
               size="sm"
               disabled={isLoading}
-              onClick={() => handleAction('resume')}
+              onClick={() => handleAction("resume")}
             >
               {resumeState.isLoading
-                ? 'Resuming...'
-                : 'Resume'}
+                ? "Resuming..."
+                : "Resume"}
             </Button>
           )}
         </div>
+      )}
+
+      {/* Adjust Balance Dialog */}
+      {isAdmin && (
+        <AdjustBalanceDialog
+          open={adjustOpen}
+          onOpenChange={setAdjustOpen}
+          accountId={account.id}
+        />
       )}
     </div>
   );

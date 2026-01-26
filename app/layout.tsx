@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <body className={`font-sans antialiased`}>
+      <body className={`font-sans antialiased Geist sans-serif`}>
         <ThemeProvider>
         <ReduxProvider>
           {children}

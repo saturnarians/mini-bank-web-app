@@ -5,6 +5,7 @@ import { navigationSlice } from './slices/navigationSlice';
 import { uiSlice } from './slices/uiSlice';
 import { transactionApi } from './services/transactionsApi';
 import { accountApi } from './services/accountsApi';
+import { transactionsUiSlice }  from './slices/transactionUi-Slice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     users: usersSlice.reducer,
     navigation: navigationSlice.reducer,
     ui: uiSlice.reducer,
+    transactionsUi: transactionsUiSlice.reducer,
     [transactionApi.reducerPath]: transactionApi.reducer,
     [accountApi.reducerPath]: accountApi.reducer,
   },

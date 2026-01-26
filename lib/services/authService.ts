@@ -1,19 +1,25 @@
-import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import {
-  generateVerificationToken,
-  UserRole,
-} from '@/lib/auth';
+import { generateVerificationToken, UserRole } from '@/lib/auth';
 import { sendEmail, generateVerificationEmailHtml } from '@/lib/email';
 import type { User } from '@/lib/types';
 
+// Helper function to generate account number
+function generateAccountNumber() {
+  return `AC${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+}
+
+
 export const authService = {
-  async register(data: {
+
+async register(data: {
     email: string;
     name: string;
     password: string;
+    accountType?: "checking" | "savings" | "investment"; // 1. Added optional type here
   }): Promise<User> {
+    
+    // 1. Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -22,40 +28,84 @@ export const authService = {
       throw new Error('USER_EXISTS');
     }
 
+    // 2. Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        name: data.name,
-        password: hashedPassword,
-        role: 'user',
-        emailVerified: false,
-      },
+    // 3. Database Transaction: User + Account + Bonus
+    const newUser = await prisma.$transaction(async (tx) => {
+      
+      // A. Create User
+      const user = await tx.user.create({
+        data: {
+          email: data.email,
+          name: data.name,
+          password: hashedPassword,
+          role: 'user', 
+          emailVerified: false,
+        },
+      });
+
+      // B. Create Default Account
+      const account = await tx.account.create({
+        data: {
+          userId: user.id,
+          // Use the provided type or default to CHECKING
+          accountType: data.accountType || "checking", 
+          accountNumber: generateAccountNumber(),
+          balance: 100, 
+        },
+      });
+
+      // C. Create Bonus Transaction (The Ledger Truth)
+      await tx.transaction.create({
+        data: {
+          accountId: account.id,
+          amount: 100,
+          type: "deposit",
+          status: "completed",
+          description: "Welcome Bonus",
+          runningBalance: 100, 
+          metadata: {
+            source: "registration_bonus",
+            reason: "Welcome bonus",
+          },
+        },
+      });
+
+      return user; 
     });
 
-    // Email verification
-    const verificationToken = await generateVerificationToken(user.email);
-    const verificationUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify?token=${verificationToken}`;
+    console.log("------------------------------------------------");
+    console.log(`🚧 DEV MODE: Registration Successful for ${newUser.email}`);
+    console.log("------------------------------------------------");
 
-    await sendEmail({
-      to: user.email,
-      subject: 'Verify Your Email',
-      html: generateVerificationEmailHtml(verificationUrl, user.name),
-    });
+    // 4. Send Email (Done AFTER transaction succeeds)
+    // try {
+    //   const verificationToken = await generateVerificationToken(newUser.email);
+    //   const verificationUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify?token=${verificationToken}`;
 
+    //   await sendEmail({
+    //     to: newUser.email,
+    //     subject: 'Verify Your Email',
+    //     html: generateVerificationEmailHtml(verificationUrl, newUser.name),
+    //   });
+    // } catch (emailError) {
+    //   console.error("Failed to send verification email:", emailError);
+    //   // We do not throw here, so the user is still registered even if email fails
+    // }
 
+    // 5. Return formatted user
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role as UserRole,
-      createdAt: user.createdAt.toISOString(),
-      emailVerified: user.emailVerified,
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role as UserRole,
+      createdAt: newUser.createdAt.toISOString(),
+      emailVerified: newUser.emailVerified, 
     };
   },
 
-  async login(data: { email: string; password: string }): Promise<User>{
+  async login(data: { email: string; password: string }): Promise<User> {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -65,14 +115,13 @@ export const authService = {
     const isValid = await bcrypt.compare(data.password, user.password);
     if (!isValid) throw new Error('INVALID_CREDENTIALS');
 
-
     return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role as UserRole,
-        createdAt: user.createdAt.toISOString(),
-        emailVerified: user.emailVerified,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role as UserRole,
+      createdAt: user.createdAt.toISOString(),
+      emailVerified: user.emailVerified,
     };
   },
 };

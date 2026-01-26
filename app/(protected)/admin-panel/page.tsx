@@ -230,3 +230,9 @@ export default function AdminPage() {
     </div>
   );
 }
+
+// adding this with the refactored code 
+// useGetAccountsQuery({
+//   status: 'active',
+//   includeSuspended: isAdmin,
+// });

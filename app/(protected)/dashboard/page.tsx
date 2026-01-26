@@ -1,35 +1,55 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AccountCarousel } from '@/components/user/dashboard/account-carousel';
-import { RecentTransactions } from '@/components/user/dashboard/recent-transactions';
-import { 
-  CreditCard, 
-  TrendingUp, 
-  Wallet, 
-  HandCoins, 
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AccountCarousel } from "@/components/user/dashboard/account-carousel";
+import { RecentTransactions } from "@/components/user/dashboard/recent-transactions";
+import { mapTransactionToView } from "@/lib/mappers/transactionMapper";
+import {
+  CreditCard,
+  TrendingUp,
+  Wallet,
+  HandCoins,
   Landmark,
   Banknote,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useGetAccountsQuery } from '@/store/services/accountsApi';
-import { useGetTransactionsQuery } from '@/store/services/transactionsApi';
+import { useGetAccountsQuery } from "@/store/services/accountsApi";
+import { useGetTransactionsQuery } from "@/store/services/transactionsApi";
 // import { transaction } from '@/lib/types';
 import { BaseProfile } from "@/components/shared/baseProfile";
+import { skipToken } from "@reduxjs/toolkit/query/react";
 
 export default function DashboardPage() {
   // RTK Query hooks
-  const { data: accounts = [], isLoading: accountsLoading } = useGetAccountsQuery();
-  const { data: transactionsData, isLoading: transactionsLoading } = useGetTransactionsQuery({});
+  const { data: accounts = [], isLoading: accountsLoading } =
+    useGetAccountsQuery({ status: "active" });
+
+  const selectedAccountId = accounts[0]?.id;
+
+  const { data: transactionsData, isLoading: transactionsLoading } =
+    useGetTransactionsQuery(
+      selectedAccountId ? { accountId: selectedAccountId } : skipToken,
+    );
 
   const transactions = transactionsData?.transactions || [];
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const activeAccounts = accounts.filter(acc => acc.status === 'active').length;
-  const recentTransactions = transactions.slice(0, 5);
+  const activeAccounts = accounts.filter(
+    (acc) => acc.status === "active",
+  ).length;
+
+  const recentTransactions = transactions
+    .slice(0, 5)
+    .map((tx) => mapTransactionToView(tx, selectedAccountId));
 
   return (
     <div className="space-y-6">
@@ -45,7 +65,11 @@ export default function DashboardPage() {
             ) : (
               <>
                 <p className="text-2xl font-bold">
-                  ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  $
+                  {totalBalance.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
                 <p className="text-xs mt-1">Across all accounts</p>
               </>
@@ -118,7 +142,10 @@ export default function DashboardPage() {
             <CardDescription>Your latest account activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentTransactions transactions={recentTransactions} isLoading={transactionsLoading} />
+            <RecentTransactions
+              transactions={recentTransactions}
+              isLoading={transactionsLoading}
+            />
           </CardContent>
         </Card>
 
@@ -146,11 +173,13 @@ export default function DashboardPage() {
               </Button>
             </Link>
             <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
-      <p className="text-gray-500 mb-8">Manage your profile and security settings below.</p>
-      
-      <BaseProfile />
-    </div>
+              <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
+              <p className="text-gray-500 mb-8">
+                Manage your profile and security settings below.
+              </p>
+
+              <BaseProfile />
+            </div>
           </CardContent>
         </Card>
       </div>

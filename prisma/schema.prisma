@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
@@ -10,47 +7,73 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// --- Enums ---
+
+enum AccountStatus {
+  completed
+  pending
+  closed
+  suspended
+}
+
+enum AccountType {
+  checking
+  savings
+  investment
+}
+
+enum TransactionType {
+  deposit
+  withdrawal
+  transfer
+  adjustment
+}
+
+// --- Models ---
+
 model User {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  email     String     @unique
-  name      String
-  password  String
-  role      String     @default("user") // superadmin, admin, manager, user
-  phone     String?
-  address   String?
-  emailVerified Boolean  @default(false)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  name          String
+  password      String
+  role          String    @default("user") 
+  phone         String?
+  address       String?
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   accounts     Account[]
   transactions Transaction[]
 }
 
 model Account {
-  id                String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String        @db.ObjectId
-  accountNumber     String        @unique
-  accountType       String        // checking, savings, investment
-  balance           Float         @default(0)
-  currency          String        @default("USD")
-  status            String        @default("active") // active, inactive, closed, suspended
-  createdAt         DateTime      @default(now())
-  lastTransactionAt DateTime?
-  updatedAt         DateTime      @updatedAt
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String    @db.ObjectId
+  accountNumber       String    @unique
+  accountType         AccountType    // checking, savings, investment
+  balance             Float     @default(0)
+  currency            String    @default("USD")
+  status              String    @default("active")
+  transactionsEnabled Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  lastTransactionAt   DateTime?
+  updatedAt           DateTime  @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   logs         AccountLog[]
+  snapshots    BalanceSnapshot[] // Moved here: Snapshots track Account state
 
   @@index([userId])
 }
 
 model AccountLog {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  accountId   String   @db.ObjectId // Must match Account.id type
-  action      String   // e.g., "SUSPENDED", "ACTIVATED"
+  accountId   String   @db.ObjectId
+  action      String   
   reason      String?
-  performedBy String   @db.ObjectId // ID of the admin
+  performedBy String   @db.ObjectId 
   createdAt   DateTime @default(now())
 
   account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -61,22 +84,40 @@ model AccountLog {
 model Transaction {
   id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   accountId          String   @db.ObjectId
-  userId             String   @db.ObjectId
-  type               String   // deposit, withdrawal, transfer
+  userId             String?   @db.ObjectId
+  type               TransactionType 
+  reason             String? 
   amount             Float
+  runningBalance     Float    // Required for your chosen snapshot logic
   currency           String   @default("USD")
-  status             String   @default("pending") // completed, pending, failed
+  status             AccountStatus
   description        String
   recipientAccountId String?  @db.ObjectId
   recipientName      String?
   timestamp          DateTime @default(now())
-  reference          String   @unique
+  reference          String?  @unique 
   updatedAt          DateTime @updatedAt
+  metadata           Json?
+  counterPartyAccountId String?
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
   @@index([userId])
   @@index([timestamp])
+}
+
+model BalanceSnapshot {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  accountId String   @db.ObjectId
+  balance   Float    
+  date      DateTime // Normalized to UTC Midnight
+  createdAt DateTime @default(now())
+
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, date])
+  @@index([accountId])
+  @@index([date])
 }

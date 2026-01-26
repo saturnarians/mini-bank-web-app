@@ -1,14 +1,13 @@
-"use client";
+'use client';
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { transactionSchema, type TransactionFormData } from '@/lib/schemas';
-import { useAppSelector } from '@/store/hooks';
+import { useGetAccountsQuery } from '@/store/services/accountsApi';
 
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,74 +22,67 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from "lucide-react"; // Using standard Lucide loader
+import { Loader2 } from 'lucide-react';
 
 interface TransactionFormProps {
-  accountId: string;
   isLoading?: boolean;
   onSubmit: (data: TransactionFormData) => void;
   onCancel: () => void;
 }
 
 export function TransactionForm({
-  accountId,
   isLoading,
   onSubmit,
   onCancel,
 }: TransactionFormProps) {
-  const { accounts } = useAppSelector(state => state.accounts);
-  
+  const { data: accounts = [] } = useGetAccountsQuery({ status: 'active' });
+
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      // Highlighting changes: Defaulting to 'transfer' logic
-      type: 'transfer',
+      type: 'transfer', // locked for this UI
       amount: 0,
       description: '',
-      recipientAccountId: '',
+      recipientAccountId: undefined,
     },
   });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        
-        {/* Recipient Selection */}
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        {/* Recipient */}
         <FormField
           control={form.control}
           name="recipientAccountId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Recipient Account</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select where to send money" />
+                    <SelectValue placeholder="Select recipient account" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {/* Internal Accounts */}
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                    My Accounts
-                  </div>
-                  {accounts
-                    .filter(acc => acc.id !== accountId)
-                    .map(acc => (
-                      <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountType} (****{acc.accountNumber.slice(-4)})
-                      </SelectItem>
-                    ))}
-                  
-                  {/* External Logic could be added here */}
+                  {accounts.map((acc) => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.accountType} (****{acc.accountNumber.slice(-4)})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Choose an account to transfer funds to.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Amount Input */}
+        {/* Amount */}
         <FormField
           control={form.control}
           name="amount"
@@ -98,18 +90,15 @@ export function TransactionForm({
             <FormItem>
               <FormLabel>Amount</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                  <Input
-                    className="pl-7"
-                    placeholder="0.00"
-                    type="number"
-                    step="0.01"
-                    disabled={isLoading}
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  disabled={isLoading}
+                  {...field}
+                  onChange={(e) =>
+                    field.onChange(Number(e.target.value) || 0)
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -122,10 +111,10 @@ export function TransactionForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Note</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g. Monthly Rent"
+                  placeholder="e.g. Rent payment"
                   disabled={isLoading}
                   {...field}
                 />
@@ -136,21 +125,22 @@ export function TransactionForm({
         />
 
         {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3">
           <Button type="submit" disabled={isLoading} className="flex-1">
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing
               </>
             ) : (
-              'Send Payment'
+              'Send Money'
             )}
           </Button>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            onClick={onCancel} 
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
             disabled={isLoading}
           >
             Cancel

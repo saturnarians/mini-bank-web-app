@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { transactionController } from "@/lib/controllers/transactionController";
+import { createTransactionSchema } from "@/lib/schemas";
 
 export const GET = authorize(["user", "admin", "superadmin"], async (req, { session }) => {
   const { searchParams } = new URL(req.url);
@@ -16,3 +17,19 @@ export const GET = authorize(["user", "admin", "superadmin"], async (req, { sess
 
   return NextResponse.json(result);
 });
+
+export const POST = authorize(
+  ['user'],
+  async (req, { params, session }) => {
+    const body = createTransactionSchema.parse(await req.json());
+
+    const tx = await transactionController.createUserTransaction({
+        session,
+        accountId: params.accountId,
+        body,
+    }
+      );
+
+    return NextResponse.json(tx, { status: 201 });
+  }
+);

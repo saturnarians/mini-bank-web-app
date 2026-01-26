@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormData } from "@/lib/schemas";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { registerUser } from "@/store/slices/authSlice";
+import { registerUser } from "@/store/slices/auth-slice";
 import { useRouter } from "next/navigation";
 
 import { Input } from "@/components/ui/input";

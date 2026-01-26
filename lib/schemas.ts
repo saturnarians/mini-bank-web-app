@@ -1,4 +1,5 @@
 import { z } from 'zod';
+const accountTypeEnum = z.enum(['checking', 'savings', 'investment']);
 
 // -------------------- Auth --------------------
 export const loginSchema = z.object({
@@ -10,7 +11,8 @@ export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  accountType: accountTypeEnum.optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"], // Highlights the confirm field on error
@@ -44,16 +46,19 @@ export const resumeAccountSchema = z.object({
 });
 
 // -------------------- Transaction --------------------
+//--------Output / domain schema(server --> client)-----------
 export const transactionSchema = z
   .object({
     type: z.enum(['deposit', 'withdrawal', 'transfer']),
     amount: z.number().positive('Amount must be greater than 0'),
-    accountId: z.string().min(1, 'Account is required'),
-    recipientAccountId: z.string().optional(),
     description: z.string().min(1, 'Description is required'),
+    recipientAccountId: z.string().optional(), // only needed for transfers
+    runningBalance: z.number(),
+    status: z.enum(['pending', 'completed', 'failed']),
+    accountId: z.string(),
+    timestamp: z.string().datetime(),
   })
   .superRefine((data, ctx) => {
-    // transfer rules
     if (data.type === 'transfer' && !data.recipientAccountId) {
       ctx.addIssue({
         path: ['recipientAccountId'],
@@ -61,14 +66,28 @@ export const transactionSchema = z
         code: z.ZodIssueCode.custom,
       });
     }
-    if (data.type === 'transfer' && data.recipientAccountId === data.accountId) {
-      ctx.addIssue({
-        path: ['recipientAccountId'],
-        message: 'Cannot transfer to the same account',
-        code: z.ZodIssueCode.custom,
-      });
-    }
   });
+
+  //--------Input schema( client --> server )-----------
+export const createTransactionSchema = z.object({
+  type: z.enum(['deposit', 'withdrawal', 'transfer']),
+  amount: z.number().positive('Amount must be greater than 0'),
+  recipientAccountId: z.string().optional(), // only needed for transfers
+  description: z.string().min(1, 'Description is required'),
+});
+
+// -------------------Profile Update--------------------------------------
+
+export const updateProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+})
+
+// --------------Adjust Balance--------------------
+export const adminAdjustBalanceSchema = z.object({
+  accountId: z.string(),
+  amount: z.number().refine(v => v !== 0),
+  reason: z.string().min(10, "Reason required"),
+})
 
 // -------------------- User --------------------
 export const userSchema = z.object({
@@ -89,3 +108,7 @@ export type SuspendAccountFormData = z.infer<typeof suspendAccountSchema>;
 export type suspendAccountFormData =  z.infer<typeof resumeAccountSchema>;
 export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type UserFormData = z.infer<typeof userSchema>;
+export type AdminAdjustBalanceFormData = z.infer<typeof adminAdjustBalanceSchema>;
+export type createTransactionFormData = z.infer<typeof createTransactionSchema>;
+export type updateProfileFormData = z.infer<typeof updateProfileSchema>;
+

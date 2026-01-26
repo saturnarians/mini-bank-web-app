@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "start": "next start",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
     "seed": "node -e \"require('fs').rmSync('node_modules/.prisma', { recursive: true, force: true }); process.exit(0)\" && npm i && npx prisma generate"
   },
   "prisma": {

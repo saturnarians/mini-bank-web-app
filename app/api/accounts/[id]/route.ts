@@ -18,5 +18,5 @@ export const PATCH = authorize(['user', 'admin', 'superadmin'], async (req, { pa
 // DELETE: Remove account
 export const DELETE = authorize(['user', 'admin', 'superadmin'], async (req, { params, session }) => {
   const result = await accountController.delete(params.id, session);
-  return NextResponse.json({ message: 'Account deleted successfully', id: params.id });
+  return NextResponse.json({ message: 'Account deleted successfully', id: result });
 });

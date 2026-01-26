@@ -25,6 +25,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         return <ArrowUpRight className="h-4 w-4 text-red-600" />;
       case 'transfer':
         return <ArrowRightLeft className="h-4 w-4 text-blue-600" />;
+      default:
+        return null;
     }
   };
 
@@ -36,6 +38,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'failed':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default:
+        return '';
     }
   };
 
@@ -56,9 +60,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {transactions.length > 0 ? (
             transactions.map((txn) => (
               <TableRow key={txn.id} className="hover:bg-muted/50">
-                <TableCell className="w-12">
-                  {getIcon(txn.type)}
-                </TableCell>
+                <TableCell className="w-12">{getIcon(txn.type)}</TableCell>
                 <TableCell className="font-medium">{txn.description}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{txn.reference}</TableCell>
                 <TableCell className="font-semibold">

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AccountRow from '@/components/admins/accounts/account-row';
 
 export default function AdminAccountsPage() {
-  const { data: accounts, isLoading, isError } = useGetAccountsQuery();
+  const { data: accounts, isLoading, isError } = useGetAccountsQuery({ status: "active" });
 
   if (isLoading) {
     return (
@@ -35,7 +35,7 @@ export default function AdminAccountsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {accounts.map((account) => (
-            <AccountRow key={account.id} account={account} isAdmin />
+            <AccountRow key={account.id} account={account} />
           ))}
         </CardContent>
       </Card>

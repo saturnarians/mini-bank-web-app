@@ -3,8 +3,10 @@ import {
   createAccountSchema,
   updateAccountSchema,
   suspendAccountSchema,
+  adminAdjustBalanceSchema,
 } from "@/lib/schemas";
 import { assertAdmin } from "@/lib/auth/auth-utils";
+import { transactionService } from "@/lib/services/transactionService";
 /**
  * AccountController
  * - Handles validation
@@ -82,6 +84,8 @@ export const accountController = {
 
     // Use your helper instead of manual if-check
     assertAdmin(session);
+
+
     // 1. Double-check Role (Internal guard)
     if (session.role !== "admin" && session.role !== "superadmin") {
       throw new Error("FORBIDDEN");
@@ -124,10 +128,45 @@ export const accountController = {
     return accountService.listByUser(session.id);
   },
 
+//   async list(
+//   session: { id: string; role: string },
+//   query: GetAccountsParams
+// ) {
+//   if (query.includeSuspended) {
+//     assertAdmin(session);
+//   }
+
+//   return accountService.listByUser({
+//     userId: session.id,
+//     role: session.role,
+//     filters: query,
+//   });
+// },
+
+
   /**
    * Dashboard summary view
    */
   async listWithTransactions(session: { id: string }) {
     return accountService.listWithRecentTransactions(session.id);
   },
+
+  async adjustBalance(
+  accountId: string,
+  session: { id: string; role: string },
+  body: unknown
+) {
+  assertAdmin(session);
+
+  const data = adminAdjustBalanceSchema.parse(body);
+  // { amount, reason, direction }
+
+  return transactionService.adminAdjustBalance({
+    accountId,
+    adminId: session.id,
+    input: data,
+  });
+},
+
 };
+

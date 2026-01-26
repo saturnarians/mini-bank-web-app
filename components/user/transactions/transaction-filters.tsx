@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setFilters, setSortBy, setSortOrder } from '@/store/slices/transactions-slice';
+import { setFilters, setSortBy, setSortOrder } from '@/store/slices/transactionUi-Slice';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -18,9 +18,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Filter, ArrowUpDown } from 'lucide-react';
 
+
+
 export function TransactionFilters() {
   const dispatch = useAppDispatch();
-  const { filters, sortBy, sortOrder } = useAppSelector(state => state.transactions);
+  const { filters, sortBy, sortOrder } = useAppSelector(state => state.transactionsUi);
 
   return (
     <div className="flex flex-wrap gap-2 items-center">

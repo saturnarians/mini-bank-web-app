@@ -5,7 +5,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { updateUser } from '@/store/slices/users-slice';
 import { UserFormData } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProfileForm } from '@/components/user/profile-form';
+import { ProfileForm } from '@/components/user/profile/profile-form';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ export default function ProfilePage() {
   const handleSubmit = async (data: UserFormData) => {
     setIsSubmitting(true);
     try {
-      await dispatch(updateUser({ id: user.id, data })).unwrap();
+      await dispatch(updateUser({ id: user.id, ...data })).unwrap();
       toast({ title: 'Success', description: 'Profile updated successfully' });
     } catch (err) {
       toast({
@@ -40,7 +40,6 @@ export default function ProfilePage() {
   const roleColor: Record<typeof user.role, string> = {
     superadmin: 'bg-red-400 text-red-800 dark:bg-red-900 dark:text-red-200',
     admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     user: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   };
 

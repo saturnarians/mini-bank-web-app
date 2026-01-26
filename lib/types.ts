@@ -1,11 +1,22 @@
+import { TransactionFormData } from '@/lib/schemas';
+
 // -------------------- Roles --------------------
 export type UserRole = 'superadmin' | 'admin' | 'user';
 
 //Account Status Types (System intention  )
-export type AccountStatus = 'ACTIVE' | 'SUSPENDED';
+export type AccountStatus = 'active' | 'inactive' | 'closed' | 'suspended';
 
 // Account Types (Business intention  )
-export type AccountType = 'USER' | 'MERCHANT' | 'ADMIN' | 'SYSTEM';
+export type AccountType =  'checking' | 'savings' | 'investment';
+
+export type TransactionType = 'deposit' | 'withdrawal' | 'transfer' | 'adjustment';
+
+
+export type CreateTransactionPayload = TransactionFormData & {
+  accountId: string; // source account
+};
+
+export type TransactionDirection = 'in' | 'out';
 
 
 // -------------------- Account --------------------
@@ -13,16 +24,17 @@ export interface Account {
   id: string;
   userId: string;
   accountNumber: string;
-  accountType: 'checking' | 'savings' | 'investment';
+  // accountId: string;
+  accountType: AccountType;
   balance: number;
   currency: 'USD';
-  status: 'active' | 'inactive' | 'closed' | 'suspended';
-  createdAt: Date;
+  status: AccountStatus;
+  createdAt: string;
   lastTransactionAt?: string;
   logs?: AccountLog[];
-  suspensionAt?: Date;
+  suspensionAt?: string;
   suspensionReason?: string;
-  updatedAt?: Date;
+  updatedAt?: string;
 }
 
 // -------------------- Account Log --------------------
@@ -48,12 +60,14 @@ export interface User {
   createdAt: string;
 }
 
+//--------------Shared payload---------
+
 // -------------------- Transaction --------------------
 export interface Transaction {
   id: string;
   accountId: string;
-  type: 'deposit' | 'withdrawal' | 'transfer';
-  amount: number;
+  type: TransactionType;
+  amount: number; // +credit, -debit
   currency: 'USD';
   status: 'completed' | 'pending' | 'failed';
   description: string;
@@ -61,6 +75,8 @@ export interface Transaction {
   recipientName?: string;
   timestamp: string;
   reference: string;
+  runningBalance: number;
+  direction: TransactionDirection;
 }
 
 // -------------------- Redux States --------------------

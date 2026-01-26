@@ -77,7 +77,7 @@ export const accountService = {
       const account = await tx.accountLog.create({
         data: {
           accountId,
-          action: "SUSPENDED",
+          action: "suspended",
           reason,
           performedBy: adminId, // ID of the admin from session
         },
@@ -131,7 +131,7 @@ export const accountService = {
    * List user accounts
    * Indexed by userId (critical for scale)
    */
-  async listByUser(userId: string) {
+  async listByUser(userId: string ) {
     return prisma.account.findMany({
       where: { userId },
       include: {
