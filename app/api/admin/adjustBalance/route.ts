@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { adjustBalanceController } from "@/lib/controllers/adjustAccountBalanceController";
+import { ZodError } from 'zod';
 
 // 1. We type the Context specifically based on your error
 type Context = {
@@ -13,6 +14,7 @@ type Context = {
 };
 
 export const POST = authorize(["admin", "superadmin"], 
+
   // 2. The second argument is 'context', not 'admin' directly
   async (req: NextRequest, context: Context) => {
     try {
@@ -20,15 +22,35 @@ export const POST = authorize(["admin", "superadmin"],
       const { session } = context;
 
       return await adjustBalanceController(req, {
+        
           // 4. Map the session properties to what the controller expects
           id: session.id,
           email: session.email,
         }
       );
     } catch (err) {
+      // Map known error shapes to appropriate HTTP statuses
+      if (err instanceof ZodError) {
+        return NextResponse.json(
+          { message: err.errors?.[0]?.message || 'Invalid input' },
+          { status: 400 }
+        );
+      }
+
+      const msg = err instanceof Error ? err.message : String(err);
+
+      if (msg === 'ACCOUNT_NOT_FOUND') {
+        return NextResponse.json({ message: 'Account not found' }, { status: 404 });
+      }
+
+      if (msg === 'Adjustment reason is required') {
+        return NextResponse.json({ message: msg }, { status: 422 });
+      }
+
+      // Fallback: internal server error
       return NextResponse.json(
-        { message: err instanceof Error ? err.message : "Server error" },
-        { status: 403 }
+        { message: msg || "Server error" },
+        { status: 500 }
       );
     }
   }

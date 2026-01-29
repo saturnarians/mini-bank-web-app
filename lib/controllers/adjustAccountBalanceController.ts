@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { transactionService } from "@/lib/services/transactionService";
+import { adminAdjustBalanceSchema } from "@/lib/schemas";
 
 // Define the interface for the admin object for type safety
 interface AdminContext {
@@ -12,23 +13,21 @@ export async function adjustBalanceController(
   admin: AdminContext
 ) {
   try {
-    const { accountId, amount, reason } = await req.json();
+    const body = await req.json();
+    const { accountId, amount, reason } = adminAdjustBalanceSchema.parse(body);
 
-    // Basic validation (Optional but recommended)
-    if (!accountId || !amount) {
-      return NextResponse.json(
-        { message: "Missing required fields" }, 
-        { status: 400 }
-      );
-    }
+    // Extract client IP safely: prefer first value from x-forwarded-for,
+    // fall back to x-real-ip, otherwise 'unknown'.
+    const xff = req.headers.get("x-forwarded-for");
+    const xRealIp = req.headers.get("x-real-ip");
+    const ipAddress = xff ? xff.split(",")[0].trim() : (xRealIp || "unknown");
 
     const tx = await transactionService.adminAdjustBalance({
       accountId,
       amount,
       reason,
-      admin, 
-      // specific headers can be null, fallback is good
-      ipAddress: req.headers.get("x-forwarded-for") || "unknown",
+      admin,
+      ipAddress,
     });
 
     return NextResponse.json(tx);

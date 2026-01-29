@@ -130,44 +130,49 @@ export const transactionService = {
   /**
    * Admin balance adjustment (append-only ledger entry)
    */
-  async adminAdjustBalance({
-  accountId,
-  amount,
-  reason,
-  admin,
-  ipAddress,
-  }: AdjustBalanceInput) {
+  async adminAdjustBalance({ accountId, amount, reason, admin, ipAddress }: AdjustBalanceInput) {
 
     if (!reason || reason.trim().length < 5) {
       throw new Error("Adjustment reason is required");
     }
-    
-    const lastTx = await prisma.transaction.findFirst({
-      where: { id: accountId },
-      orderBy: { timestamp: "desc" },
-    });
 
-    const previousBalance = lastTx?.runningBalance ?? 0;
-    const newBalance = previousBalance + amount;
+    // Perform the balance mutation and insertion of the adjustment transaction
+    // inside a single database transaction to avoid races.
+    return prisma.$transaction(async (tx) => {
+      // 1) Ensure account exists
+      const account = await tx.account.findUnique({ where: { id: accountId } });
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND');
 
-    return prisma.transaction.create({
-      data: {
-        accountId: accountId,
-        userId: null,
-        amount: amount,
-        type: "adjustment",
-        status: "completed",
-        reference: `ADMIN-ADJ-${Date.now()}`,
-        timestamp: new Date(),
-        description: "Admin adjustment",
-        reason: reason,
-        runningBalance: newBalance,
-        metadata: {
-          adjustedByAdminId: admin.id,
-          adjustedByAdminEmail: admin.email,
-          ipAddress: ipAddress,
+      // 2) Atomically increment the account balance and obtain the new value
+      const updatedAccount = await tx.account.update({
+        where: { id: accountId },
+        data: { balance: { increment: amount } },
+      });
+
+      const newBalance = updatedAccount.balance;
+
+      // 3) Create an append-only transaction record reflecting the admin adjustment
+      const txRecord = await tx.transaction.create({
+        data: {
+          accountId: accountId,
+          userId: null,
+          amount: amount,
+          type: "adjustment",
+          status: "completed",
+          reference: `ADMIN-ADJ-${Date.now()}`,
+          timestamp: new Date(),
+          description: "Admin adjustment",
+          reason: reason,
+          runningBalance: newBalance,
+          metadata: {
+            adjustedByAdminId: admin.id,
+            adjustedByAdminEmail: admin.email,
+            ipAddress: ipAddress,
+          },
         },
-      },
+      });
+
+      return txRecord;
     });
   },
 

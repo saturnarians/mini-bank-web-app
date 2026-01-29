@@ -2,23 +2,44 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterFormData } from "@/lib/schemas";
+import { registerSchema, RegisterFormData } from "@/lib/schemas"; // Ensure this schema has accountType
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { registerUser } from "@/store/slices/auth-slice";
 import { useRouter } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 export default function RegisterForm() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { isLoading, error: serverError } = useAppSelector((state) => state.auth);
+  const { isLoading, error: serverError } = useAppSelector(
+    (state) => state.auth
+  );
 
-  // 1. Initialize the form
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -26,10 +47,10 @@ export default function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      accountType: "checking", // Default value
     },
   });
 
-  // 2. Handle Submit
   const onSubmit = async (values: RegisterFormData) => {
     try {
       await dispatch(registerUser(values)).unwrap();
@@ -43,7 +64,9 @@ export default function RegisterForm() {
     <Card className="max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Register</CardTitle>
-        <CardDescription>Enter your details to create an account.</CardDescription>
+        <CardDescription>
+          Enter your details to create an account.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -72,8 +95,39 @@ export default function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="john@example.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="john@example.com"
+                      {...field}
+                    />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Account Type Field (New) */}
+            <FormField
+              control={form.control}
+              name="accountType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="checking">Checking</SelectItem>
+                      <SelectItem value="savings">Savings</SelectItem>
+                      <SelectItem value="investment">Investment</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -109,7 +163,11 @@ export default function RegisterForm() {
               )}
             />
 
-            {serverError && <p className="text-sm font-medium text-destructive">{serverError}</p>}
+            {serverError && (
+              <p className="text-sm font-medium text-destructive">
+                {serverError}
+              </p>
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

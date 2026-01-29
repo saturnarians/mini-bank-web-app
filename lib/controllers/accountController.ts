@@ -152,19 +152,21 @@ export const accountController = {
   },
 
   async adjustBalance(
-  accountId: string,
-  session: { id: string; role: string },
+  ipAddress: string,
+  session: { id: string; email: string },
   body: unknown
 ) {
   assertAdmin(session);
 
-  const data = adminAdjustBalanceSchema.parse(body);
-  // { amount, reason, direction }
+  const { amount, accountId, reason } = adminAdjustBalanceSchema.parse(body);
+  // 
 
   return transactionService.adminAdjustBalance({
-    accountId,
-    adminId: session.id,
-    input: data,
+    ipAddress,
+    admin: { id: session.id, email: session.email },
+    amount, 
+    accountId, 
+    reason
   });
 },
 

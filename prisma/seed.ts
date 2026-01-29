@@ -42,20 +42,20 @@ async function main() {
   });
 
   // Create manager user
-  const managerPassword = await bcryptjs.hash('manager123', 10);
-  const manager = await prisma.user.upsert({
-    where: { email: 'manager@bank.com' },
-    update: {},
-    create: {
-      email: 'manager@bank.com',
-      name: 'Manager User',
-      password: managerPassword,
-      role: 'manager',
-      phone: '+1-555-0101',
-      address: '456 Oak Ave, City, State',
-      emailVerified: true,
-    },
-  });
+  // const managerPassword = await bcryptjs.hash('manager123', 10);
+  // const manager = await prisma.user.upsert({
+  //   where: { email: 'manager@bank.com' },
+  //   update: {},
+  //   create: {
+  //     email: 'manager@bank.com',
+  //     name: 'Manager User',
+  //     password: managerPassword,
+  //     role: 'manager',
+  //     phone: '+1-555-0101',
+  //     address: '456 Oak Ave, City, State',
+  //     emailVerified: true,
+  //   },
+  // });
 
   // Create regular user
   const userPassword = await bcryptjs.hash('user123', 10);
@@ -83,8 +83,8 @@ async function main() {
   console.log('  Email: admin@bank.com');
   console.log('  Password: admin123');
   console.log('\nMANAGER:');
-  console.log('  Email: manager@bank.com');
-  console.log('  Password: manager123');
+  // console.log('  Email: manager@bank.com');
+  // console.log('  Password: manager123');
   console.log('\nUSER:');
   console.log('  Email: john@example.com');
   console.log('  Password: user123');
