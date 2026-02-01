@@ -33,7 +33,7 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    if (!users || users.length === 0) dispatch(fetchUsers());
   }, [dispatch]);
 
   const handleOpenDialog = (user?: User) => {

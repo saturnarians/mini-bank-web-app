@@ -21,14 +21,14 @@ export const GET = authorize(["user", "admin", "superadmin"], async (req, { sess
 export const POST = authorize(
   ['user'],
   async (req, { params, session }) => {
+    // parse and validate the request body; accountId must be provided in body
     const body = createTransactionSchema.parse(await req.json());
 
     const tx = await transactionController.createUserTransaction({
-        session,
-        accountId: params.accountId,
-        body,
-    }
-      );
+      session,
+      accountId: body.accountId,
+      body,
+    });
 
     return NextResponse.json(tx, { status: 201 });
   }

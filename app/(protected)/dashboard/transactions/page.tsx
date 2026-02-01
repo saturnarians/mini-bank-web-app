@@ -23,6 +23,7 @@ import { Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { computeBalance } from "@/lib/domain/ledger/computeBalance";
+import ExternalTransferForm from '@/components/user/transactions/external-transfer-form';
 
 export default function TransactionsPage() {
   // --- UI STATE (Redux) ---
@@ -35,6 +36,7 @@ export default function TransactionsPage() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null,
   );
+  const [showExternalForm, setShowExternalForm] = useState(false);
   const { toast } = useToast();
 
   // --- API ---
@@ -121,14 +123,24 @@ const balancesByAccountId = useMemo(() => {
         </div>
 
         {selectedAccountId && (
-          <Button
-            size="lg"
-            className="gap-2"
-            onClick={() => setDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            New Transaction
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              size="lg"
+              className="gap-2"
+              onClick={() => setDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              New Transaction
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="gap-2"
+              onClick={() => setShowExternalForm((s) => !s)}
+            >
+              Send Outside Bank
+            </Button>
+          </div>
         )}
       </div>
 
@@ -236,6 +248,17 @@ new Intl.NumberFormat('en-NG', {
             }
           }}
         />
+      )}
+      {showExternalForm && selectedAccountId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>External Transfer</CardTitle>
+            <CardDescription>Send money to other banks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExternalTransferForm defaultAccountId={selectedAccountId} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );

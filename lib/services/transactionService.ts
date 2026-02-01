@@ -72,32 +72,78 @@ export const transactionService = {
     };
   }) {
     return prisma.$transaction(async (tx) => {
-
-      // 1. verify ownership
-      const account = await tx.account.findFirst({
-        where: {
-          id: accountId,
-          userId,
-        },
-        // lock: { mode: 'ForUpdate' }, // 🔐 critical for balance safety
+      // 1. verify ownership of the sender
+      const sender = await tx.account.findFirst({
+        where: { id: accountId, userId },
       });
 
-      if (!account) throw new Error('ACCOUNT_NOT_FOUND');
-      if (account.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
-      // if (!account.transactionsEnabled) throw new Error('TRANSACTIONS_DISABLED');
+      if (!sender) throw new Error('ACCOUNT_NOT_FOUND');
+      if (sender.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
 
-      //2. apply domain rules 
-      if (
-        (data.type === 'withdrawal' || data.type === 'transfer') &&
-        account.balance < data.amount
-      ) {
+      // 2. Basic balance guard
+      if ((data.type === 'withdrawal' || data.type === 'transfer') && sender.balance < data.amount) {
         throw new Error('INSUFFICIENT_FUNDS');
       }
 
-      // create transaction
-      const transaction = await tx.transaction.create({
+      // 3. Handle internal transfer (same bank)
+      if (data.type === 'transfer') {
+        if (!data.recipientAccountId) throw new Error('RECIPIENT_REQUIRED');
+        if (data.recipientAccountId === sender.id) throw new Error('CANNOT_TRANSFER_TO_SAME_ACCOUNT');
+
+        const recipient = await tx.account.findUnique({ where: { id: data.recipientAccountId } });
+        if (!recipient) throw new Error('RECIPIENT_NOT_FOUND');
+        if (recipient.status === 'SUSPENDED') throw new Error('RECIPIENT_SUSPENDED');
+
+        // perform atomic balance updates
+        const updatedSender = await tx.account.update({
+          where: { id: sender.id },
+          data: { balance: { decrement: data.amount } },
+        });
+
+        const updatedRecipient = await tx.account.update({
+          where: { id: recipient.id },
+          data: { balance: { increment: data.amount } },
+        });
+
+        // create sender transaction
+        const senderTx = await tx.transaction.create({
+          data: {
+            accountId: sender.id,
+            amount: data.amount,
+            type: 'transfer',
+            description: data.description,
+            recipientAccountId: recipient.id,
+            status: 'completed',
+            timestamp: new Date(),
+            userId,
+            reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+            runningBalance: updatedSender.balance,
+          },
+        });
+
+        // create recipient transaction (incoming)
+        const recipientTx = await tx.transaction.create({
+          data: {
+            accountId: recipient.id,
+            amount: data.amount,
+            type: 'transfer',
+            description: `Incoming transfer from ${sender.accountNumber ?? sender.id}`,
+            recipientAccountId: null,
+            status: 'completed',
+            timestamp: new Date(),
+            userId: recipient.userId,
+            reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+            runningBalance: updatedRecipient.balance,
+          },
+        });
+
+        return { senderTx, recipientTx };
+      }
+
+      // 4. Non-transfer flows: deposit / withdrawal (existing behaviour)
+      const txRecord = await tx.transaction.create({
         data: {
-          accountId: account.id,
+          accountId: sender.id,
           amount: data.amount,
           type: data.type,
           description: data.description,
@@ -105,25 +151,18 @@ export const transactionService = {
           status: 'completed',
           timestamp: new Date(),
           userId,
-          reference: `TX-${Date.now()}`,
+          reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
           runningBalance: data.runningBalance,
         },
       });
 
-      // Balance mutation
       if (data.type === 'deposit') {
-        await tx.account.update({
-          where: { id: account.id },
-          data: { balance: { increment: data.amount } },
-        });
-      } else {
-        await tx.account.update({
-          where: { id: account.id },
-          data: { balance: { decrement: data.amount } },
-        });
+        await tx.account.update({ where: { id: sender.id }, data: { balance: { increment: data.amount } } });
+      } else if (data.type === 'withdrawal') {
+        await tx.account.update({ where: { id: sender.id }, data: { balance: { decrement: data.amount } } });
       }
 
-      return transaction;
+      return txRecord;
     });
   },
 
@@ -169,6 +208,55 @@ export const transactionService = {
             adjustedByAdminEmail: admin.email,
             ipAddress: ipAddress,
           },
+        },
+      });
+
+      return txRecord;
+    });
+  },
+
+  async createExternalTransfer({
+    userId,
+    accountId,
+    amount,
+    recipientBank,
+    recipientAccountNumber,
+    description,
+  }: {
+    userId: string;
+    accountId: string;
+    amount: number;
+    recipientBank: string;
+    recipientAccountNumber: string;
+    description?: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const account = await tx.account.findFirst({ where: { id: accountId, userId } });
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND');
+      if (account.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
+      if (account.balance < amount) throw new Error('INSUFFICIENT_FUNDS');
+
+      const updated = await tx.account.update({
+        where: { id: accountId },
+        data: { balance: { decrement: amount } },
+      });
+
+      const txRecord = await tx.transaction.create({
+        data: {
+          accountId,
+          userId,
+          amount,
+          type: 'transfer',
+          status: 'completed',
+          description: description || 'External transfer',
+          runningBalance: updated.balance,
+          reference: `EXT-${Date.now()}-${Math.floor(Math.random()*1000000)}`,
+          metadata: {
+            external: true,
+            recipientBank,
+            recipientAccountNumber,
+          },
+          timestamp: new Date(),
         },
       });
 

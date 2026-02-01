@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ReduxProvider } from '@/providers/reduxProviders'
+import { getSessionFromCookies } from '@/lib/auth'
 import { ThemeProvider } from '@/providers/themeProviders'
 import './styles/globals.css'
 
@@ -30,16 +31,19 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Server-side: attempt to read session from cookies and pass as initial auth
+  const session = await getSessionFromCookies();
+
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className={`font-sans antialiased Geist sans-serif`}>
         <ThemeProvider>
-        <ReduxProvider>
+        <ReduxProvider initialUser={session ?? null}>
           {children}
         </ReduxProvider>
         </ThemeProvider>

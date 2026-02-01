@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState, User } from "@/lib/types";
 import type { LoginFormData, RegisterFormData } from "@/lib/schemas";
-import { accountApi } from "@/store/services/accountsApi";
 
 /**
  * Initial auth state
@@ -66,7 +65,7 @@ export const registerUser = createAsyncThunk(
   "auth/register",
   async (
     data: Omit<RegisterFormData, "confirmPassword">,
-    { dispatch, rejectWithValue },
+    { rejectWithValue },
   ) => {
     try {
       const res = await fetch("/api/auth/register", {
@@ -76,28 +75,10 @@ export const registerUser = createAsyncThunk(
         body: JSON.stringify(data),
       });
 
+      // await dispatch(getCurrentUser()).unwrap() how can i use the dispatch
+
       const result = await res.json();
       if (!res.ok) throw new Error(result?.error || "Registration failed");
-
-      // If the server returned the created user with accounts, seed the accounts cache
-      try {
-        const user = result.user;
-        const firstAccount = user?.accounts?.[0];
-        if (firstAccount) {
-          dispatch(
-            accountApi.util.updateQueryData("getAccounts", {}, (draft: any) => {
-              // Ensure draft exists and is an array
-              if (!draft) return;
-              // Insert the new account at the top
-              const exists = draft.find((a: any) => a.id === firstAccount.id);
-              if (!exists) draft.unshift(firstAccount);
-            })
-          );
-        }
-      } catch (e) {
-        // non-fatal cache update failure — ignore
-        console.warn("Failed to update accounts cache after registration", e);
-      }
 
       return result;
     } catch (err: any) {
@@ -201,6 +182,7 @@ export const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
       state.isLoading = false;
+      state.hydrated = true;
     },
   },
   extraReducers: (builder) => {
@@ -211,9 +193,11 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.user = action.payload.user;
+        // `loginUser` returns the hydrated user object (from getCurrentUser)
+        state.user = action.payload;
         state.isAuthenticated = true;
         state.isLoading = false;
+        state.hydrated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -221,19 +205,13 @@ export const authSlice = createSlice({
       })
 
       // REGISTER
-
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
 
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state) => {
         state.isLoading = false;
-        // Hydrate auth state from registration response if available
-        if (action.payload?.user) {
-          state.user = action.payload.user;
-          state.isAuthenticated = true;
-        }
       })
 
       .addCase(registerUser.rejected, (state, action) => {

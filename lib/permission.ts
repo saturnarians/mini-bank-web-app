@@ -4,7 +4,7 @@ type Permission = string | '*';
 
 export const ROLE_PERMISSIONS:Record<UserRole, readonly Permission[]> = {
   superadmin: ['*'], // full access
-  admin: ['/dashboard', '/accounts', '/admin', '/profile', '/transactions'],
+  admin: ['/dashboard', '/accounts', '/admin', '/admin-panel', '/profile', '/transactions'],
   user: ['/dashboard', '/accounts', '/profile', '/transactions'],
 } as const;
 

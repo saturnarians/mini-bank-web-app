@@ -28,7 +28,7 @@ interface UserTableProps {
 export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   const roleColor: Record<User['role'], string> = {
     admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    superadmin: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     user: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   };
 

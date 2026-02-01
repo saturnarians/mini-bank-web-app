@@ -20,6 +20,7 @@ function buildOptimisticTransaction(
     accountId: body.accountId,
     recipientAccountId: body.recipientAccountId,
     runningBalance: body.runningBalance || 0,
+    direction: body.type === 'deposit' ? 'in' : 'out',
   };
 }
 
@@ -126,10 +127,55 @@ export const transactionApi = createApi({
       invalidatesTags: (r, er, tx) => [
         { type: 'Transaction', id: `LIST_${tx.accountId}` }],
     }),
+    // External bank transfer
+    createExternalTransfer: builder.mutation<
+      Transaction,
+      { accountId: string; amount: number; recipientBank: string; recipientAccountNumber: string; description?: string }
+    >({
+      query: (body) => ({ url: '/transactions/external', method: 'POST', body }),
+      async onQueryStarted(body, { dispatch, queryFulfilled }) {
+        const optimistic: Transaction = {
+          id: `temp-ext-${Date.now()}`,
+          amount: body.amount,
+          type: 'transfer',
+          status: 'pending',
+          reference: 'PENDING',
+          currency: 'USD',
+          timestamp: new Date().toISOString(),
+          description: body.description || 'External transfer',
+          accountId: body.accountId,
+          recipientAccountId: undefined,
+          runningBalance: 0,
+          direction: 'out',
+        };
+
+        const patch = dispatch(
+          transactionApi.util.updateQueryData('getTransactions', { accountId: body.accountId }, (draft) => {
+            const last = draft.transactions[0]?.runningBalance ?? 0;
+            optimistic.runningBalance = last - body.amount;
+            draft.transactions.unshift(optimistic);
+          })
+        );
+
+        try {
+          const { data: real } = await queryFulfilled;
+          dispatch(
+            transactionApi.util.updateQueryData('getTransactions', { accountId: body.accountId }, (draft) => {
+              const idx = draft.transactions.findIndex((t) => t.id === optimistic.id);
+              if (idx !== -1) draft.transactions[idx] = real;
+            })
+          );
+        } catch {
+          patch.undo();
+        }
+      },
+      invalidatesTags: (r, e, arg) => [{ type: 'Transaction', id: `LIST_${arg.accountId}` }],
+    }),
   }),
 });
 
 export const {
   useGetTransactionsQuery,
   useCreateTransactionMutation,
+  useCreateExternalTransferMutation,
 } = transactionApi;

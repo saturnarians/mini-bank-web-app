@@ -7,7 +7,6 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logoutUser } from '@/store/slices/auth-slice';
 import { LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut, Menu, X, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// import { hasPermission } from '@/lib/permission';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -23,23 +22,21 @@ export function AppSidebar() {
   };
 
   const menuItems = [
-    {
-      label: 'Dashboard',
-      href: '/dashboard',
-      icon: LayoutDashboard,
-      permission: 'view_dashboard',
-    },
+    // {
+    //   label: 'Dashboard',
+    //   href: '/dashboard',
+    //   icon: LayoutDashboard,
+    //   permission: 'view_dashboard',
+    // },
     {
       label: 'Accounts',
-      href: '/dashboard/accounts',
+      href: '/admin-panel/accounts',
       icon: CreditCard,
-      permission: 'manage_accounts',
     },
     {
       label: 'Transactions',
-      href: '/dashboard/transactions',
+      href: '/admin-panel/transactions',
       icon: TrendingUp,
-      permission: 'manage_transactions',
     },
     // ...(user?.role === 'admin' || user?.role === 'superadmin' ? [{
     //   label: 'Admin Panel',
@@ -47,12 +44,12 @@ export function AppSidebar() {
     //   icon: Users,
     //   permission: 'manage_users',
     // }] : []),
-    {
-      label: 'Profile',
-      href: '/dashboard/profile',
-      icon: Settings,
-      permission: 'view_profile',
-    },
+    // {
+    //   label: 'Profile',
+    //   href: '/dashboard/profile',
+    //   icon: Settings,
+    //   permission: 'view_profile',
+    // },
   ];
 
   const visibleMenuItems = menuItems.filter(

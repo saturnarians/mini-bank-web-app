@@ -21,7 +21,7 @@ if (!user) {
 }
   
 // Create A response
-const response = NextResponse.json({ user }, {status: 200});
+const response = NextResponse.json( user , {status: 200});
 
 setTokenCookie(response, token, expiresIn );
 
