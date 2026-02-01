@@ -36,34 +36,62 @@ model User {
   email         String    @unique
   name          String
   password      String
-  role          String    @default("user") 
+  role          String    @default("user")
   phone         String?
   address       String?
   emailVerified Boolean   @default(false)
+  supervisorId  String?   @db.ObjectId
+  status        String    @default("active")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts     Account[]
-  transactions Transaction[]
+  accounts      Account[]
+  transactions  Transaction[]
+  adminLogs     AdminActionLog[]
+  
+  // FIX 1: Changed onDelete/onUpdate to NoAction to satisfy Prisma Self-Relation rules
+  supervisedBy  User?   @relation("SupervisorRelation", fields: [supervisorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subordinates  User[]  @relation("SupervisorRelation")
+
+  @@index([supervisorId])
+  @@index([role])
+  @@index([status])
+}
+
+model AdminActionLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId    String   @db.ObjectId
+  action     String
+  targetType String
+  targetId   String   @db.ObjectId
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  admin      User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([targetId])
+  @@index([createdAt])
 }
 
 model Account {
-  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId              String    @db.ObjectId
-  accountNumber       String    @unique
-  accountType         AccountType  // checking, savings, investment
-  balance             Float     @default(0)
-  currency            String    @default("USD")
-  status              String    @default("active")
-  transactionsEnabled Boolean   @default(true)
-  createdAt           DateTime  @default(now())
-  lastTransactionAt   DateTime? 
-  updatedAt           DateTime  @updatedAt
+  id                  String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String       @db.ObjectId
+  accountNumber       String       @unique
+  accountType         AccountType
+  balance             Float        @default(0)
+  currency            String       @default("USD")
+  status              String       @default("active")
+  transactionsEnabled Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  lastTransactionAt   DateTime?
+  updatedAt           DateTime     @updatedAt
 
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  logs         AccountLog[]
-  snapshots    BalanceSnapshot[] // Moved here: Snapshots track Account state
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions        Transaction[]
+  logs                AccountLog[]
+  snapshots           BalanceSnapshot[]
 
   @@index([userId])
 }
@@ -71,9 +99,9 @@ model Account {
 model AccountLog {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   accountId   String   @db.ObjectId
-  action      String   
+  action      String
   reason      String?
-  performedBy String   @db.ObjectId 
+  performedBy String   @db.ObjectId
   createdAt   DateTime @default(now())
 
   account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -82,26 +110,28 @@ model AccountLog {
 }
 
 model Transaction {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  accountId          String   @db.ObjectId
-  userId             String?   @db.ObjectId
-  type               TransactionType 
-  reason             String? 
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  accountId          String          @db.ObjectId
+  userId             String?         @db.ObjectId
+  type               TransactionType
+  reason             String?
   amount             Float
-  runningBalance     Float    // Required for your chosen snapshot logic
-  currency           String   @default("USD")
+  runningBalance     Float
+  currency           String          @default("USD")
   status             AccountStatus
   description        String
-  recipientAccountId String?  @db.ObjectId
+  recipientAccountId String?         @db.ObjectId
   recipientName      String?
-  timestamp          DateTime @default(now())
-  reference          String?  @unique 
-  updatedAt          DateTime @updatedAt
+  timestamp          DateTime        @default(now())
+  reference          String?         @unique
+  updatedAt          DateTime        @updatedAt
   metadata           Json?
   counterPartyAccountId String?
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  account            Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  // FIX 2: Changed to NoAction to avoid conflict with "User -> Account -> Transaction" cascade
+  user               User?           @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([accountId])
   @@index([userId])
@@ -111,8 +141,8 @@ model Transaction {
 model BalanceSnapshot {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   accountId String   @db.ObjectId
-  balance   Float    
-  date      DateTime // Normalized to UTC Midnight
+  balance   Float
+  date      DateTime
   createdAt DateTime @default(now())
 
   account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)

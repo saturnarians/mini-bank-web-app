@@ -137,12 +137,31 @@ export const accountApi = createApi({
         }
       },
     }),
+
+    // ======================
+    // GET ACCOUNTS (ADMIN)
+    // Admin-specific query that includes user relationship data
+    // ======================
+    getAdminAccounts: builder.query<Account[], GetAccountsParams>({
+      query: (params = {}) => ({
+        url: "/admin/accounts-list",
+        params,
+      }),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map((a) => ({ type: "Account" as const, id: a.id })),
+              { type: "Account", id: "ADMIN_LIST" },
+            ]
+          : [{ type: "Account", id: "ADMIN_LIST" }],
+    }),
     
   }),
 });
 
 export const {
   useGetAccountsQuery,
+  useGetAdminAccountsQuery,
   useCreateAccountMutation,
   useSuspendAccountMutation,
   useResumeAccountMutation,

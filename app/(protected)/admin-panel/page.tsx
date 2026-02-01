@@ -1,4 +1,13 @@
 'use client';
+// import { AdminDashboard } from '@/components/admins/admin-dashboard-example';
+
+//  export default function AdminPage() {
+//   return(
+//     <div>
+//       <AdminDashboard />
+//     </div>
+//   )
+//  }
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, AlertCircle, Users, Shield, Crown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BaseProfile } from "@/components/shared/baseProfile";
+// import { BaseProfile } from "@/components/shared/baseProfile";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -100,7 +109,7 @@ export default function AdminPage() {
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="font-mono text-lg">Welcome, {currentUser?.email}</p>
         </div>
-        <BaseProfile />
+        {/* <BaseProfile /> */}
         {/* Add more admin stats here if needed */}
        </div>
         </div>
@@ -231,8 +240,8 @@ export default function AdminPage() {
   );
 }
 
-// adding this with the refactored code 
-// useGetAccountsQuery({
-//   status: 'active',
-//   includeSuspended: isAdmin,
-// });
+// // adding this with the refactored code 
+// // useGetAccountsQuery({
+// //   status: 'active',
+// //   includeSuspended: isAdmin,
+// // });

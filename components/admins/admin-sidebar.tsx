@@ -22,34 +22,23 @@ export function AppSidebar() {
   };
 
   const menuItems = [
-    // {
-    //   label: 'Dashboard',
-    //   href: '/dashboard',
-    //   icon: LayoutDashboard,
-    //   permission: 'view_dashboard',
-    // },
+    {
+      label: 'Dashboard',
+      href: '/admin-panel/',
+      icon: LayoutDashboard,
+      permission: 'view_dashboard',
+    },
     {
       label: 'Accounts',
       href: '/admin-panel/accounts',
       icon: CreditCard,
     },
     {
-      label: 'Transactions',
-      href: '/admin-panel/transactions',
-      icon: TrendingUp,
+      label: 'Profile',
+      href: '/admin-panel/profile',
+      icon: Settings,
+      permission: 'view_profile',
     },
-    // ...(user?.role === 'admin' || user?.role === 'superadmin' ? [{
-    //   label: 'Admin Panel',
-    //   href: '/admin-panel',
-    //   icon: Users,
-    //   permission: 'manage_users',
-    // }] : []),
-    // {
-    //   label: 'Profile',
-    //   href: '/dashboard/profile',
-    //   icon: Settings,
-    //   permission: 'view_profile',
-    // },
   ];
 
   const visibleMenuItems = menuItems.filter(

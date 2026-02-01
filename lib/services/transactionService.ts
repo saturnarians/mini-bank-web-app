@@ -266,59 +266,216 @@ export const transactionService = {
 
   // List all accounts with counterParty deliver //Transaction History Parser
 
-//   async listForAccount({
-//   accountId,
-//   userId,
-//   includeCounterparty,
-// }: {
-//   accountId: string;
-//   userId: string;
-//   includeCounterparty?: boolean;
-// }) {
-//   const transactions = await prisma.transaction.findMany({
-//     where: {
-//       OR: [
-//         { accountId },
-//         { recipientAccountId: accountId },
-//       ],
-//     },
-//     orderBy: { description: 'desc' }, // i saw CreatedAt  before
-//     include: includeCounterparty
-//       ? {
-//           account: true,
-//           recipientAccount: true,
-//         }
-//       : undefined,
-//   });
+  /**
+   * Get transaction history for an account
+   * Can be filtered by date range and transaction type
+   */
+  async getAccountHistory({
+    accountId,
+    startDate,
+    endDate,
+    type,
+    limit = 50,
+    skip = 0,
+  }: {
+    accountId: string;
+    startDate?: Date;
+    endDate?: Date;
+    type?: string;
+    limit?: number;
+    skip?: number;
+  }) {
+    const where: any = { accountId };
 
-//   return transactions.map((tx) => {
-//     const isOutgoing = tx.accountId === accountId;
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp.gte = startDate;
+      if (endDate) where.timestamp.lte = endDate;
+    }
 
-//     return {
-//       id: tx.id,
-//       type: tx.type,
-//       amount: tx.amount,
-//       description: tx.description,
-//       status: tx.status,
-//       timestamp: tx.timestamp.toISOString(),
+    if (type) {
+      where.type = type;
+    }
 
-//       direction: isOutgoing ? 'out' : 'in',
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          account: {
+            select: {
+              accountNumber: true,
+              accountType: true,
+            },
+          },
+        },
+      }),
+      prisma.transaction.count({ where }),
+    ]);
 
-//       counterparty: includeCounterparty
-//         ? isOutgoing
-//           ? tx.recipientAccount && {
-//               accountId: tx.recipientAccount.id,
-//               accountNumber: tx.recipientAccount.accountNumber,
-//               accountType: tx.recipientAccount.accountType,
-//             }
-//           : tx.account && {
-//               accountId: tx.account.id,
-//               accountNumber: tx.account.accountNumber,
-//               accountType: tx.account.accountType,
-//             }
-//         : undefined,
-//     };
-//   });
-// },
+    return {
+      transactions,
+      total,
+      page: Math.floor(skip / limit) + 1,
+      pages: Math.ceil(total / limit),
+    };
+  },
 
-};
+  /**
+   * Get transaction history across all user's accounts
+   * Admin can view any user's history
+   */
+  async getUserTransactionHistory({
+    userId,
+    startDate,
+    endDate,
+    limit = 50,
+    skip = 0,
+  }: {
+    userId: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+    skip?: number;
+  }) {
+    const where: any = {
+      account: {
+        userId,
+      },
+    };
+
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp.gte = startDate;
+      if (endDate) where.timestamp.lte = endDate;
+    }
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          account: {
+            select: {
+              id: true,
+              accountNumber: true,
+              accountType: true,
+            },
+          },
+        },
+      }),
+      prisma.transaction.count({ where }),
+    ]);
+
+    return {
+      transactions,
+      total,
+      page: Math.floor(skip / limit) + 1,
+      pages: Math.ceil(total / limit),
+    };
+  },
+
+  /**
+   * Get all transactions (admin view)
+   */
+  async getAllTransactions({
+    startDate,
+    endDate,
+    type,
+    status,
+    limit = 50,
+    skip = 0,
+  }: {
+    startDate?: Date;
+    endDate?: Date;
+    type?: string;
+    status?: string;
+    limit?: number;
+    skip?: number;
+  }) {
+    const where: any = {};
+
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp.gte = startDate;
+      if (endDate) where.timestamp.lte = endDate;
+    }
+
+    if (type) where.type = type;
+    if (status) where.status = status;
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        orderBy: { timestamp: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          account: {
+            select: {
+              id: true,
+              accountNumber: true,
+              accountType: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.transaction.count({ where }),
+    ]);
+
+    return {
+      transactions,
+      total,
+      page: Math.floor(skip / limit) + 1,
+      pages: Math.ceil(total / limit),
+    };
+  },
+
+  /**
+   * Get transaction statistics for a user
+   */
+  async getUserTransactionStats(userId: string) {
+    const [totalCount, totalAmount, byType] = await Promise.all([
+      prisma.transaction.count({
+        where: {
+          account: { userId },
+        },
+      }),
+      prisma.transaction.aggregate({
+        where: {
+          account: { userId },
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+      prisma.transaction.groupBy({
+        by: ['type'],
+        where: {
+          account: { userId },
+        },
+        _count: true,
+        _sum: {
+          amount: true,
+        },
+      }),
+    ]);
+
+    return {
+      totalCount,
+      totalAmount: totalAmount._sum.amount ?? 0,
+      byType,
+    };
+  },
+}

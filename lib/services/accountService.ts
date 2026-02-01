@@ -38,6 +38,13 @@ export const accountService = {
   async getById(accountId: string) {
     return prisma.account.findUnique({
       where: { id: accountId },
+      include: {
+        user: true,
+        logs: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
+      },
     });
   },
 
@@ -69,76 +76,165 @@ export const accountService = {
   },
 
   /**
-   * Admin-only suspend
+   * Admin-only suspend account
    */
   async suspend(accountId: string, reason: string, adminId: string) {
     return await prisma.$transaction(async (tx) => {
-      // 1. Create the Audit Log
-      const account = await tx.accountLog.create({
+      // 1. Verify account exists
+      const account = await tx.account.findUnique({ where: { id: accountId } });
+      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
+
+      // 2. Create the Audit Log
+      await tx.accountLog.create({
         data: {
           accountId,
           action: "suspended",
           reason,
-          performedBy: adminId, // ID of the admin from session
+          performedBy: adminId,
         },
       });
 
-      // 2. Update the Account Status
-      await tx.account.update({
-      where: { id: accountId },
-      data: { status: "suspended" },
+      // 3. Create admin action log
+      await tx.adminActionLog.create({
+        data: {
+          adminId,
+          action: "suspend_account",
+          targetType: "account",
+          targetId: accountId,
+          reason,
+          metadata: { previousStatus: account.status },
+        },
+      });
+
+      // 4. Update the Account Status
+      const updated = await tx.account.update({
+        where: { id: accountId },
+        data: { status: "suspended" },
+      });
+
+      return updated;
     });
-
-    return account;
-
-  });
   },
 
-  // Resume account
-  async resume(accountId: string, reason:string, adminId: string) {
-  //   - verify account exists
-  // - if already active → no-op or error
-  // - update status to "active"
-  // - create AccountLog { action: "RESUMED", reason, performedBy }
+  /**
+   * Admin-only resume account
+   */
+  async resume(accountId: string, reason: string, adminId: string) {
     return await prisma.$transaction(async (tx) => {
+      // 1. Verify account exists
       const account = await tx.account.findUnique({ where: { id: accountId } });
-  
-  // If already active, just return it (no-op) or throw error
-  if (account?.status === "active") return account;
+      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
 
-      // 1. Create the Audit Log
+      // 2. If already active, no-op
+      if (account.status === "active") return account;
+
+      // 3. Create the Audit Log
       await tx.accountLog.create({
         data: {
           accountId,
-          action: "RESUMED",
+          action: "resumed",
           reason,
-          performedBy: adminId, // ID of the admin from session
+          performedBy: adminId,
         },
       });
-      // 2. Update the Account Status
-      const updatedAccount = await tx.account.update({
+
+      // 4. Create admin action log
+      await tx.adminActionLog.create({
+        data: {
+          adminId,
+          action: "resume_account",
+          targetType: "account",
+          targetId: accountId,
+          reason,
+          metadata: { previousStatus: account.status },
+        },
+      });
+
+      // 5. Update the Account Status
+      const updated = await tx.account.update({
         where: { id: accountId },
         data: { status: "active" },
       });
-      return updatedAccount;
-    }
-  );
-  },
-  
 
+      return updated;
+    });
+  },
+
+  /**
+   * Admin-only create/set initial balance for account
+   */
+  async createBalance(
+    accountId: string,
+    balance: number,
+    reason: string,
+    adminId: string
+  ) {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Verify account exists
+      const account = await tx.account.findUnique({ where: { id: accountId } });
+      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
+
+      const previousBalance = account.balance;
+      const difference = balance - previousBalance;
+
+      // 2. Update account balance
+      const updated = await tx.account.update({
+        where: { id: accountId },
+        data: { balance },
+      });
+
+      // 3. Create transaction record for audit trail
+      await tx.transaction.create({
+        data: {
+          accountId,
+          userId: account.userId,
+          type: "adjustment",
+          amount: difference,
+          runningBalance: balance,
+          description: `Admin Balance Creation/Adjustment: ${reason}`,
+          status: "completed",
+          reference: `ADM-${Date.now()}`,
+          reason,
+          metadata: {
+            previousBalance,
+            newBalance: balance,
+            adminId,
+          },
+        },
+      });
+
+      // 4. Create admin action log
+      await tx.adminActionLog.create({
+        data: {
+          adminId,
+          action: "create_balance",
+          targetType: "account",
+          targetId: accountId,
+          reason,
+          metadata: {
+            previousBalance,
+            newBalance: balance,
+            difference,
+          },
+        },
+      });
+
+      return updated;
+    });
+  },
 
   /**
    * List user accounts
    * Indexed by userId (critical for scale)
    */
-  async listByUser(userId: string ) {
+  async listByUser(userId: string) {
     return prisma.account.findMany({
       where: { userId },
       include: {
         logs: {
           orderBy: { createdAt: "desc" },
-          take: 1, // take: 1 => Just get the most recent action
-        }
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -154,10 +250,41 @@ export const accountService = {
       include: {
         transactions: {
           take: 5,
-          orderBy: { timestamp: "desc" }, // ensure schema supports this
+          orderBy: { timestamp: "desc" },
         },
       },
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  /**
+   * Get all accounts (admin view)
+   */
+  async listAll(
+    options?: {
+      skip?: number;
+      take?: number;
+      status?: string;
+    }
+  ) {
+    return prisma.account.findMany({
+      where: options?.status ? { status: options.status } : undefined,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+        logs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: options?.skip,
+      take: options?.take,
     });
   },
 };

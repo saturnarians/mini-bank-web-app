@@ -54,38 +54,3 @@ export function DashboardHeader() {
     </div>
   );
 }
-
-
-/*
-2. Protecting Specific Actions (Buttons)
-Sometimes you are on a page that everyone can see (like an Account Detail page), but only an Admin should see the "Delete" or "Suspend" button.
-
-TypeScript
-
-export function AccountActions({ accountId }: { accountId: string }) {
-  const { user } = useAppSelector((state) => state.auth);
-
-  return (
-    <div className="flex gap-2">
-      <button className="btn-secondary">Download Statement</button>
-
-      {/* 2. Conditional rendering for Admin-only buttons 
-      {user?.role === 'admin' && (
-        <button 
-          onClick={() => handleSuspend(accountId)} 
-          className="bg-red-500 text-white p-2 rounded"
-        >
-          Suspend Account
-        </button>
-      )}
-    </div>
-  );
-}
-3. Why this "Double-Check" is Important
-You might wonder: "If I already protected the URL in middleware, why do I need this?"
-
-Visual Polish: It looks unprofessional to show an "Admin" tab to a regular customer.
-
-Security Context: Even if they can't get to /admin, they might still be on /accounts/123 and try to click a "Delete" button. If the button is hidden, they can't even attempt the unauthorized action.
-
-*/

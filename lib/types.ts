@@ -35,6 +35,12 @@ export interface Account {
   suspensionAt?: string;
   suspensionReason?: string;
   updatedAt?: string;
+  // Admin view: includes user relationship for display
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 // -------------------- Account Log --------------------
