@@ -38,8 +38,8 @@ export function TransactionDialog({
         <TransactionForm
           // Only form fields, accountId is passed separately
           isLoading={isLoading}
-          onSubmit={(data) => {
-            onSubmit({
+          onSubmit={async (data) => {
+            await onSubmit({
               data, 
               accountId
             }); // Merge accountId in parent handler

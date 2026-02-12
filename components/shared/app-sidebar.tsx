@@ -80,7 +80,7 @@ export function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border transition-transform duration-300 flex flex-col md:translate-x-0',
+          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border backdrop-blur transition-transform duration-300 flex flex-col md:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -89,8 +89,8 @@ export function AppSidebar() {
           <div className="flex items-center gap-2">
             <Building2 className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-lg font-bold">Mini Bank</h1>
-              <p className="text-xs text-muted-foreground">Banking Platform</p>
+              <h1 className="text-lg font-bold">Patheon Bank</h1>
+              <p className="text-xs text-muted-foreground">Banking With Ease</p>
             </div>
           </div>
         </div>

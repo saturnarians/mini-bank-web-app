@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppSelector } from "@/store/hooks";
 import {
   useCreateTransactionMutation,
+  useCreateExternalTransferMutation,
   useGetTransactionsQuery,
 } from "@/store/services/transactionsApi";
 import { useGetAccountsQuery } from "@/store/services/accountsApi";
@@ -23,20 +24,19 @@ import { Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { computeBalance } from "@/lib/domain/ledger/computeBalance";
-import ExternalTransferForm from '@/components/user/transactions/external-transfer-form';
+import { ExternalTransferDialog }from '@/components/user/transactions/external-transfer-dialog';
 
 export default function TransactionsPage() {
   // --- UI STATE (Redux) ---
-  const { filters, sortBy, sortOrder } = useAppSelector(
-    (state) => state.transactionsUi,
-  );
+  const { filters, sortBy, sortOrder } = useAppSelector((state) => state.transactionsUi);
 
   // --- LOCAL STATE ---
   const [dialogOpen, setDialogOpen] = useState(false);
+   const [externalDialogOpen, setExternalDialogOpen] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null,
   );
-  const [showExternalForm, setShowExternalForm] = useState(false);
+  
   const { toast } = useToast();
 
   // --- API ---
@@ -47,23 +47,16 @@ export default function TransactionsPage() {
     data: transactionsData,
     isLoading: txLoading,
     error: txError,
-  } = useGetTransactionsQuery(
-    { accountId: selectedAccountId! },
-    { skip: !selectedAccountId },
-  );
+  } = useGetTransactionsQuery();
 
   const [createTransaction, { isLoading: isSubmitting }] =
     useCreateTransactionMutation();
+  
+  const [createExternalTransfer, { isLoading: isExternalSubmitting }] =
+    useCreateExternalTransferMutation();
 
   // --- DERIVED ---
   const transactions = transactionsData?.transactions ?? [];
-  
-  // 1. Calculate the Grand Total using the raw transactions array
-const totalBalance = useMemo(() => {
-  // Pass the ARRAY here, not the map.
-  return computeBalance(transactions);
-}, [transactions]);
-
 // 2. Group transactions for individual accounts (Syncing logic with computeBalance)
 const balancesByAccountId = useMemo(() => {
   const map: Record<string, number> = {};
@@ -89,6 +82,8 @@ const balancesByAccountId = useMemo(() => {
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((tx) => {
+        // Filter by selected account
+        if (selectedAccountId && tx.accountId !== selectedAccountId) return false;
         if (filters.type && tx.type !== filters.type) return false;
         if (filters.status && tx.status !== filters.status) return false;
         if (
@@ -107,38 +102,45 @@ const balancesByAccountId = useMemo(() => {
             : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         return sortOrder === "asc" ? compare : -compare;
       });
-  }, [transactions, filters, sortBy, sortOrder]);
+  }, [transactions, filters, sortBy, sortOrder, selectedAccountId]);
 
   if (accountsLoading) return <Skeleton className="h-40" />;
 
   return (
-    <div className="space-y-6">
+    <div 
+    // className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 
+    // w-full max-w-7xl mx-auto px-4 py-6 space-y-6 sm:px-6 lg:px-8"
+    className=" grid grid-cols-1 md:grid-cols-1 gap-4 
+    w-full max-w-7xl mx-auto px-4 py-6 space-y-6 sm:px-6 lg:px-8 "
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between md:text-left text-center">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-2xl font-bold sm:text-3xl">Transactions</h1>
           <p className="text-muted-foreground mt-1">
             Ledger-based account activity
           </p>
         </div>
 
         {selectedAccountId && (
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2 md:flex-row md:gap-3">
             <Button
-              size="lg"
-              className="gap-2"
+              // size="lg"
+              className="flex-1 gap-2 "
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              New Transaction
+              Local Transaction
             </Button>
+            
             <Button
-              size="lg"
-              variant="ghost"
-              className="gap-2"
-              onClick={() => setShowExternalForm((s) => !s)}
+              // size="lg"
+              // variant="ghost"
+              className="flex-1 gap-2"
+              onClick={() => setExternalDialogOpen(true)}
             >
-              Send Outside Bank
+              <Plus className="h-4 w-4" />
+              International Transaction
             </Button>
           </div>
         )}
@@ -159,15 +161,15 @@ new Intl.NumberFormat('en-NG', {
         return (
           <div
             key={acc.id}
-            className="flex justify-between items-center border p-4 rounded"
+            className="flex flex-col items-start justify-between gap-3 rounded border p-4 sm:flex-row sm:items-center"
           >
-            <div>
-              <p className="font-semibold">
+            <div className="min-w-0">
+              <p className="font-semibold wrap-break-word">
                 {acc.accountType} — ****{acc.accountNumber.slice(-4)}
               </p>
               <p className="text-sm text-muted-foreground">
                 {/* Display as $0.00 format */}
-                Balance: &#36;{
+                Total Transaction: &#36;{
                 balance
                 .toLocaleString('en-US',
                  { minimumFractionDigits: 2,
@@ -176,7 +178,7 @@ new Intl.NumberFormat('en-NG', {
               </p>
             </div>
 
-            <Button
+            {/* <Button
             variant="outline"
               onClick={() => {
                 setSelectedAccountId(acc.id);
@@ -184,7 +186,7 @@ new Intl.NumberFormat('en-NG', {
               }}
             >
               Create Transaction
-            </Button>
+            </Button> */}
           </div>
         );
       })}
@@ -192,14 +194,14 @@ new Intl.NumberFormat('en-NG', {
       {/* Errors */}
       {txError && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4 flex-1" />
           <AlertDescription>Failed to load transactions</AlertDescription>
         </Alert>
       )}
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4 flex-1">
           <TransactionFilters />
         </CardContent>
       </Card>
@@ -215,8 +217,10 @@ new Intl.NumberFormat('en-NG', {
               Sorted by {sortBy} ({sortOrder})
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <TransactionTable transactions={filteredTransactions} />
+          <CardContent className="p-0 sm:p-6 flex-1">
+            <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0">
+              <TransactionTable transactions={filteredTransactions} />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -249,17 +253,34 @@ new Intl.NumberFormat('en-NG', {
           }}
         />
       )}
-      {showExternalForm && selectedAccountId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>External Transfer</CardTitle>
-            <CardDescription>Send money to other banks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ExternalTransferForm defaultAccountId={selectedAccountId} />
-          </CardContent>
-        </Card>
+      {selectedAccountId && (
+        <ExternalTransferDialog
+          open={externalDialogOpen}
+          accountId={selectedAccountId}
+          isLoading={isExternalSubmitting}
+          onOpenChange={setExternalDialogOpen}
+          onSubmit={async ({ data, accountId }) => {
+            try {
+              await createExternalTransfer({
+                ...data,
+                accountId: accountId,
+              }).unwrap();
+
+              toast({
+                title: "External Transfer created",
+                description: "Transfer completed successfully",
+              });
+              setExternalDialogOpen(false);
+            } catch {
+              toast({
+                title: "Transaction failed",
+                variant: "destructive",
+              });
+            }
+          }}
+        />
       )}
     </div>
   );
 }
+

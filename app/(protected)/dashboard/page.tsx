@@ -25,7 +25,7 @@ import {
 import { useGetAccountsQuery } from "@/store/services/accountsApi";
 import { useGetTransactionsQuery } from "@/store/services/transactionsApi";
 // import { transaction } from '@/lib/types';
-import { BaseProfile } from "@/components/shared/baseProfile";
+// import { BaseProfile } from "@/components/shared/baseProfile";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 
 export default function DashboardPage() {
@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const recentTransactions = transactions
     .slice(0, 5)
     .map((tx) => mapTransactionToView(tx, selectedAccountId));
-
+  
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -172,14 +172,14 @@ export default function DashboardPage() {
                 Create Account
               </Button>
             </Link>
-            <div className="max-w-4xl mx-auto p-8">
+            {/* <div className="max-w-4xl mx-auto p-8">
               <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
               <p className="text-gray-500 mb-8">
                 Manage your profile and security settings below.
               </p>
 
-              <BaseProfile />
-            </div>
+               <BaseProfile /> 
+            </div> */}
           </CardContent>
         </Card>
       </div>

@@ -37,7 +37,7 @@ export default function AccountsPage() {
             <p className="font-semibold">
               {acc.accountType} — ****{acc.accountNumber.slice(-4)}
             </p>
-            <p>Balance: ₦{acc.balance.toLocaleString()}</p>
+            <p>Balance: ${acc.balance.toLocaleString()}</p>
             <p>Status: {acc.status}</p>
           </div>
 

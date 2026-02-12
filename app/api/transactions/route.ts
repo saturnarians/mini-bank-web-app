@@ -7,10 +7,12 @@ import { createTransactionSchema } from "@/lib/schemas";
 export const GET = authorize(["user", "admin", "superadmin"], async (req, { session }) => {
   const { searchParams } = new URL(req.url);
 
+  const accountId = searchParams.get("accountId") || undefined;
   const cursor = searchParams.get("cursor") || undefined;
   const limit = searchParams.get("limit") || undefined;
 
   const result = await transactionController.list(session, {
+    accountId,
     cursor,
     limit,
   });
@@ -33,3 +35,4 @@ export const POST = authorize(
     return NextResponse.json(tx, { status: 201 });
   }
 );
+

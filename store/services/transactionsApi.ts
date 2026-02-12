@@ -3,7 +3,6 @@ import type { Transaction, CreateTransactionPayload } from '@/lib/types';
 import type { TransactionFormData } from '@/lib/schemas';
 import { computeBalance } from '@/lib/domain/ledger/computeBalance';
 
-
 // Helper to build optimistic transaction
 function buildOptimisticTransaction(
   body: TransactionFormData & { accountId: string }
@@ -11,7 +10,7 @@ function buildOptimisticTransaction(
   return {
     id: `temp-${Date.now()}`,
     amount: body.amount,
-    type: body.type,  // deposit | withdrawal
+    type: body.type, // deposit | withdrawal
     status: 'pending',
     reference: 'PENDING',
     currency: 'USD',
@@ -32,34 +31,49 @@ export const transactionApi = createApi({
   tagTypes: ['Transaction', 'Account'],
   endpoints: (builder) => ({
 
-//-------------- QUERY Fetch transactions (per account)
+    //-------------- QUERY Fetch transactions (all accounts or per account)
     getTransactions: builder.query<
       { transactions: Transaction[]; nextCursor: string | null },
-      { accountId: string; cursor?: string | null }
+      { accountId?: string; cursor?: string | null } | void
     >({
-      query: ({ accountId, cursor }) => ({
-        url: '/transactions',
-        params: { accountId, cursor},
-      }),
-      providesTags: (result, err, { accountId }) =>
-        result
-          ? [
-            // 1. Tag individual items for granular updates
-              ...result.transactions.map((tx) => ({
-                type: 'Transaction' as const,
-                id: tx.id,
-              })),
-              // 2. Tag the specific account's list (The "Smart Merge")
-              { type: 'Transaction', id: `LIST_${accountId}` },
-            ]
-          : [{ type: 'Transaction', id: `LIST_${accountId}` }],
+      query: (args) => {
+        const accountId = args?.accountId;
+        const cursor = args?.cursor;
+
+        return {
+          url: '/transactions',
+          params: {
+            ...(accountId ? { accountId } : {}),
+            ...(cursor ? { cursor } : {}),
+          },
+        };
+      },
+      providesTags: (result, err, args) => {
+        const accountId = args?.accountId;
+
+        if (!result) {
+          return [
+            { type: 'Transaction' as const, id: 'LIST_ALL' },
+            ...(accountId ? [{ type: 'Transaction' as const, id: `LIST_${accountId}` }] : []),
+          ];
+        }
+
+        return [
+          ...result.transactions.map((tx) => ({
+            type: 'Transaction' as const,
+            id: tx.id,
+          })),
+          { type: 'Transaction' as const, id: 'LIST_ALL' },
+          ...(accountId ? [{ type: 'Transaction' as const, id: `LIST_${accountId}` }] : []),
+        ];
+      },
     }),
 
-/*-----------------The Mutation----------------------*/
+    /*-----------------The Mutation----------------------*/
     // Create transaction
     createTransaction: builder.mutation<
-    Transaction,
-    CreateTransactionPayload
+      Transaction,
+      CreateTransactionPayload
     >({
       query: (body) => ({
         url: '/transactions',
@@ -87,10 +101,10 @@ export const transactionApi = createApi({
           )
         );
 
-/*--------------Patch account balance (derived)-----------*/
-     const balancePath = dispatch(
+        /*--------------Patch account balance (derived)-----------*/
+        const balancePath = dispatch(
           transactionApi.util.updateQueryData(
-            "getTransactions",
+            'getTransactions',
             { accountId: body.accountId },
             (draft) => {
               const newBalance = computeBalance(draft.transactions);
@@ -101,9 +115,9 @@ export const transactionApi = createApi({
         );
 
         try {
-          const { data:realTx } = await queryFulfilled;
-          
-/*-------------Replace temp tx with real tx ---------*/
+          const { data: realTx } = await queryFulfilled;
+
+          /*-------------Replace temp tx with real tx ---------*/
           dispatch(
             transactionApi.util.updateQueryData(
               'getTransactions',
@@ -125,12 +139,25 @@ export const transactionApi = createApi({
       },
 
       invalidatesTags: (r, er, tx) => [
-        { type: 'Transaction', id: `LIST_${tx.accountId}` }],
+        { type: 'Transaction', id: `LIST_${tx.accountId}` },
+        { type: 'Transaction', id: 'LIST_ALL' },
+      ],
     }),
+
     // External bank transfer
     createExternalTransfer: builder.mutation<
       Transaction,
-      { accountId: string; amount: number; recipientBank: string; recipientAccountNumber: string; description?: string }
+      {
+        accountId: string;
+        amount: number;
+        recipientName: string;
+        recipientBank: string;
+        recipientAccountNumber: number;
+        description?: string;
+        swiftCode?: string;
+        iban?: string;
+        routingNumber?: number;
+      }
     >({
       query: (body) => ({ url: '/transactions/external', method: 'POST', body }),
       async onQueryStarted(body, { dispatch, queryFulfilled }) {
@@ -169,7 +196,10 @@ export const transactionApi = createApi({
           patch.undo();
         }
       },
-      invalidatesTags: (r, e, arg) => [{ type: 'Transaction', id: `LIST_${arg.accountId}` }],
+      invalidatesTags: (r, e, arg) => [
+        { type: 'Transaction', id: `LIST_${arg.accountId}` },
+        { type: 'Transaction', id: 'LIST_ALL' },
+      ],
     }),
   }),
 });

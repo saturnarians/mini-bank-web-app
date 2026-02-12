@@ -1,36 +1,53 @@
 import { NextResponse } from 'next/server';
-import { authorize } from '@/lib/auth/guard';
-import { transactionService } from '@/lib/services/transactionService';
-import { z } from 'zod';
+import { getSessionFromCookies } from '@/lib/auth'; // Assuming you use NextAuth
+import { transactionService } from '@/lib/services/transactionService'; // Import the function we wrote
 
-const schema = z.object({
-  accountId: z.string().min(1),
-  amount: z.number().positive(),
-  recipientBank: z.string().min(1),
-  recipientAccountNumber: z.string().min(1),
-  description: z.string().optional(),
-});
-
-export const POST = authorize(['user'], async (req, { session }) => {
-  const body = await req.json();
-
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const tx = await transactionService.createExternalTransfer({
-      userId: session.id,
-      accountId: parsed.data.accountId,
-      amount: parsed.data.amount,
-      recipientBank: parsed.data.recipientBank,
-      recipientAccountNumber: parsed.data.recipientAccountNumber,
-      description: parsed.data.description,
+    // 1. Check Authentication
+    const session = await getSessionFromCookies();
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 2. Get Data from Body
+    const body = await req.json();
+    const { 
+      accountId, 
+      amount, 
+      recipientBank, 
+      recipientAccountNumber, 
+      recipientName, 
+      swiftCode, 
+      iban, 
+      routingNumber, 
+      description 
+    } = body;
+
+    // 3. Validation (Basic)
+    if (!amount || !accountId || !recipientBank || !recipientAccountNumber) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // 4. Call the Service Function
+    const transfer = await transactionService.createExternalTransfer({
+    userId: session.id,
+    accountId, // ⚠️ verify this exists
+    amount: parseFloat(amount),
+    recipientBank,
+    recipientAccountNumber,
+    recipientName,
+    swiftCode,
+    iban,
+    routingNumber,
+    description,
     });
 
-    return NextResponse.json(tx, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Server error' }, { status: 400 });
+    return NextResponse.json({ success: true, transfer });
+
+  } catch (error: any) {
+    console.error("Transfer Error:", error);
+    return NextResponse.json({ error: error.message || 'Transfer failed' }, { status: 500 });
   }
-});
+}

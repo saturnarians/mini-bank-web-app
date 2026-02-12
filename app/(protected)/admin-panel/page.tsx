@@ -99,21 +99,21 @@ export default function AdminPage() {
   const canManageAdmins = currentUser?.role === 'superadmin';
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">System Administration</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-2xl font-bold sm:text-3xl">System Administration</h1>
           {/* Admin Specific Info Card */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="font-mono text-lg">Welcome, {currentUser?.email}</p>
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:mb-8">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="font-mono text-sm sm:text-lg break-all">Welcome, {currentUser?.email}</p>
         </div>
         {/* <BaseProfile /> */}
         {/* Add more admin stats here if needed */}
        </div>
         </div>
-        <Button onClick={() => handleOpenDialog()} size="lg" className="gap-2">
+        <Button onClick={() => handleOpenDialog()} size="lg" className="w-full gap-2 sm:w-auto">
           <Plus className="h-4 w-4" />
           New User
         </Button>
@@ -128,7 +128,7 @@ export default function AdminPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -218,12 +218,14 @@ export default function AdminPage() {
             <CardTitle>Users</CardTitle>
             <CardDescription>Manage system users and their roles</CardDescription>
           </CardHeader>
-          <CardContent>
-            <UserTable
-              users={users}
-              onEdit={handleOpenDialog}
-              onDelete={handleDelete}
-            />
+          <CardContent className="p-0 sm:p-6">
+            <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0">
+              <UserTable
+                users={users}
+                onEdit={handleOpenDialog}
+                onDelete={handleDelete}
+              />
+            </div>
           </CardContent>
         </Card>
       )}

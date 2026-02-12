@@ -44,8 +44,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
+    <div className="w-full overflow-x-auto rounded-lg border border-border">
+      <Table className="min-w-200 w-full">
         <TableHeader>
           <TableRow>
             <TableHead>Type</TableHead>
@@ -56,7 +56,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableHead>Date</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody className="whitespace-nowrap">
           {transactions.length > 0 ? (
             transactions.map((txn) => (
               <TableRow key={txn.id} className="hover:bg-muted/50">

@@ -108,19 +108,19 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Admin Dashboard</h1>
         <p className="text-slate-600 dark:text-slate-400">
           Manage accounts, balances, and view transaction history
         </p>
       </div>
 
       <Tabs defaultValue="accounts" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="accounts">Accounts Management</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 p-1 sm:grid-cols-2">
+          <TabsTrigger value="accounts" className="w-full whitespace-normal text-center">Accounts Management</TabsTrigger>
+          <TabsTrigger value="transactions" className="w-full whitespace-normal text-center">Transactions</TabsTrigger>
         </TabsList>
 
         {/* Accounts Management Tab */}
@@ -277,14 +277,15 @@ export function AdminDashboard() {
         <TabsContent value="transactions">
           {historyAccountId ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                 <Button
                   onClick={() => setHistoryAccountId('')}
                   variant="outline"
+                  className="w-full sm:w-auto"
                 >
                   ← Back to Accounts
                 </Button>
-                <span className="text-sm font-medium">Account: {historyAccountId}</span>
+                <span className="text-sm font-medium break-all">Account: {historyAccountId}</span>
               </div>
               <TransactionHistoryViewer accountId={historyAccountId} />
             </div>

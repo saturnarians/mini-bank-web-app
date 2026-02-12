@@ -1,34 +1,33 @@
 import { transactionService } from '@/lib/services/transactionService';
-import { createTransactionSchema, adminAdjustBalanceSchema } from '@/lib/schemas';
+import { createTransactionSchema, adminAdjustBalanceSchema, transactionSchema } from '@/lib/schemas';
 import { CreateTransactionPayload } from '@/lib/types';
 import { z } from 'zod';
-
-type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
 
 export const transactionController = {
 
   async list(
     session: { id: string },
-    query: { cursor?: string; limit?: string }
+    query: { accountId?: string; cursor?: string; limit?: string }
   ) {
     return transactionService.listByUser({
       userId: session.id,
+      accountId: query.accountId,
       cursor: query.cursor,
       limit: query.limit ? Number(query.limit) : 20,
     });
   },
 
-  async listAll(req: Request, session: { id: string }) {
-  const accountId = req.query.accountId as string;
-  const include = req.query.include as string | undefined;
+//   async listAll(req: Request, session: { id: string }) {
+//   const accountId = req.query.accountId as string;
+//   const include = req.query.include as string | undefined;
 
-  return transactionService.listForAccount({
-    accountId,
-    userId: session.id,
-    includeCounterparty: include === 'counterparty',
-  });
-},
+//   return transactionService.listForAccount({
+//     accountId,
+//     userId: session.id,
+//     includeCounterparty: include === 'counterparty',
+//   });
+// },
 
 
   async createUserTransaction({
@@ -42,7 +41,7 @@ export const transactionController = {
   }) {
 
     // Validate user intent
-    const data = createTransactionSchema.parse(body);
+    const data = transactionSchema.parse(body);
 
     return transactionService.createUserTransaction({
       userId: session.id,
@@ -54,22 +53,23 @@ export const transactionController = {
   
 
   async adminAdjustBalance({ 
-      adminId,
-      accountId,
+      admin,
+      ipAddress,
       body,
     } : {
-    adminId: string;
-    accountId: string;
+    admin:{id:string; email:string;};
+    ipAddress: string;
     body: unknown;
   }) {
 
     const data = adminAdjustBalanceSchema.parse(body);
 
     return transactionService.adminAdjustBalance({
-      adminId,
-      accountId,
-      input: data,
+      admin: admin,
+      ipAddress: ipAddress ,
+      ...data,
     }
     );
   },
 };
+

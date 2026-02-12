@@ -12,7 +12,7 @@ generator client {
 enum AccountStatus {
   completed
   pending
-  closed
+  failed
   suspended
 }
 
@@ -27,6 +27,12 @@ enum TransactionType {
   withdrawal
   transfer
   adjustment
+}
+
+enum TransactionApprovalStatus {
+  pending
+  approved
+  rejected
 }
 
 // --- Models ---
@@ -126,7 +132,12 @@ model Transaction {
   reference          String?         @unique
   updatedAt          DateTime        @updatedAt
   metadata           Json?
+  isHistorical       Boolean @default(false)
   counterPartyAccountId String?
+  approvalStatus     TransactionApprovalStatus @default(pending)
+  approvedBy         String?         @db.ObjectId
+  approvedAt         DateTime?
+  rejectionReason    String?
 
   account            Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
@@ -136,6 +147,7 @@ model Transaction {
   @@index([accountId])
   @@index([userId])
   @@index([timestamp])
+  @@index([approvalStatus])
 }
 
 model BalanceSnapshot {

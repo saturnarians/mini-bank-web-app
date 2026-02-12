@@ -37,7 +37,7 @@ export function DashboardHeader() {
     //     );
     //   })}
     // </nav>
-    <div className="border-b border-border bg-card sticky top-0 z-10">
+    <div className="border-b border-border backdrop-blur bg-card sticky top-0 z-10">
       <div className="px-6 py-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Welcome back, {user?.name?.split(' ')[0]}</h2>

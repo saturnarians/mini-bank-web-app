@@ -98,6 +98,66 @@ export const userSchema = z.object({
   role: z.enum(['superadmin', 'admin', 'user']),
 });
 
+// -------------------- Admin Transaction Approval --------------------
+export const approveTransactionSchema = z.object({
+  transactionId: z.string(),
+  reason: z.string().optional(),
+});
+
+export const rejectTransactionSchema = z.object({
+  transactionId: z.string(),
+  rejectionReason: z.string().min(5, "Rejection reason must be at least 5 characters"),
+});
+
+export const externalTransferSchema = z.object({
+  amount: z
+    .number({
+      required_error: 'Amount is required',
+      invalid_type_error: 'Amount must be a number',
+    })
+    .positive('Amount must be greater than zero'),
+
+  recipientBank: z
+    .string()
+    .min(1, 'Recipient bank is required'),
+
+  recipientAccountNumber: z.coerce
+  .number({
+    required_error: 'Account Number is required',
+    invalid_type_error: 'Account Number must be a number',
+  })
+  .min(1000000000, 'Account number is too short'), // 10+ digits numeric
+
+
+  recipientName: z
+    .string()
+    .min(2, 'Recipient name is required'),
+
+  swiftCode: z
+    .string()
+    .trim()
+    .regex(/^[a-zA-Z0-9]+$/, 'SWIFT code must be alphanumeric')
+    .optional()
+    .or(z.literal('')),
+
+  iban: z
+    .string()
+    .trim()
+    .regex(/^[a-zA-Z0-9]+$/, 'IBAN must be alphanumeric')
+    .optional()
+    .or(z.literal('')),
+
+  routingNumber: z.coerce
+  .number()
+  .optional(),
+    // .or(z.literal('')),
+
+  description: z
+    .string()
+    .optional()
+    .or(z.literal('')),
+});
+
 // -------------------- Export TypeScript types --------------------
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
@@ -111,4 +171,7 @@ export type UserFormData = z.infer<typeof userSchema>;
 export type AdminAdjustBalanceFormData = z.infer<typeof adminAdjustBalanceSchema>;
 export type createTransactionFormData = z.infer<typeof createTransactionSchema>;
 export type updateProfileFormData = z.infer<typeof updateProfileSchema>;
+export type ApproveTransactionFormData = z.infer<typeof approveTransactionSchema>;
+export type RejectTransactionFormData = z.infer<typeof rejectTransactionSchema>;
+export type ExternalTransferFormData = z.infer<typeof externalTransferSchema>
 

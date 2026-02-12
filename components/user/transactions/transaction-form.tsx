@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { transactionSchema, type TransactionFormData } from '@/lib/schemas';
 import { useGetAccountsQuery } from '@/store/services/accountsApi';
-
 import {
   Form,
   FormControl,
@@ -41,7 +40,7 @@ export function TransactionForm({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'transfer', // locked for this UI
-      amount: 0,
+      amount: undefined,
       description: '',
       recipientAccountId: undefined,
     },
@@ -49,6 +48,8 @@ export function TransactionForm({
 
   return (
     <Form {...form}>
+      console.log(form.errors);
+      console.log('errors', form.formState.errors);
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"
@@ -61,8 +62,8 @@ export function TransactionForm({
             <FormItem>
               <FormLabel>Recipient Account</FormLabel>
               <Select
-                value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value)=> field.onChange(value)}
+                defaultValue={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -71,7 +72,7 @@ export function TransactionForm({
                 </FormControl>
                 <SelectContent>
                   {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
+                    <SelectItem key={acc.id} value={acc.id.toString()}>
                       {acc.accountType} (****{acc.accountNumber.slice(-4)})
                     </SelectItem>
                   ))}
@@ -95,9 +96,10 @@ export function TransactionForm({
                   step="0.01"
                   disabled={isLoading}
                   {...field}
-                  onChange={(e) =>
-                    field.onChange(Number(e.target.value) || 0)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(value === '' ? undefined : Number(value));
+                  }}
                 />
               </FormControl>
               <FormMessage />

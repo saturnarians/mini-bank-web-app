@@ -4,12 +4,14 @@ import { TransactionFormData } from '@/lib/schemas';
 export type UserRole = 'superadmin' | 'admin' | 'user';
 
 //Account Status Types (System intention  )
-export type AccountStatus = 'active' | 'inactive' | 'closed' | 'suspended';
+export type AccountStatus = 'active' | 'inactive' | 'failed' | 'suspended';
 
 // Account Types (Business intention  )
 export type AccountType =  'checking' | 'savings' | 'investment';
 
 export type TransactionType = 'deposit' | 'withdrawal' | 'transfer' | 'adjustment';
+
+export type TransactionApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 
 export type CreateTransactionPayload = TransactionFormData & {
@@ -83,6 +85,21 @@ export interface Transaction {
   reference: string;
   runningBalance: number;
   direction: TransactionDirection;
+  approvalStatus?: TransactionApprovalStatus;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}
+
+export interface externalTransaction {
+  amount: number; 
+  recipientName: string;
+  recipientBank: string; 
+  recipientAccountNumber: number; 
+  description?: string;
+  swiftCode?: string;
+  iban?: string;
+  routingNumber?: number;
 }
 
 // -------------------- Redux States --------------------

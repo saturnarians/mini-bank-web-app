@@ -1,71 +1,248 @@
 'use client'
-
-import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateExternalTransferMutation } from '@/store/services/transactionsApi'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ExternalTransferFormData, externalTransferSchema } from '@/lib/schemas';
 
-const schema = z.object({
-  accountId: z.string().min(1),
-  amount: z.number().positive(),
-  recipientBank: z.string().min(1),
-  recipientAccountNumber: z.string().min(1),
-  description: z.string().optional(),
-})
 
-type FormData = z.infer<typeof schema>
+interface ExternalTransferFormProps {
+  isLoading?: boolean;
+  onSubmit: (data: ExternalTransferFormData) => void;
+  onCancel: () => void;
+  // defaultAccountId: string;
+  // onSuccess?: () => void;
+}
 
-export default function ExternalTransferForm({ defaultAccountId }: { defaultAccountId?: string }) {
-  const [createExternal] = useCreateExternalTransferMutation()
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { accountId: defaultAccountId || '', amount: 0 } })
-  const { toast } = useToast()
+export function ExternalTransferForm({ 
+  isLoading,
+  onSubmit,
+  onCancel,
+ }: ExternalTransferFormProps) {
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      await createExternal(data).unwrap()
-      toast({ title: 'Transfer submitted', description: 'External transfer created' })
-      reset()
-    } catch (err: any) {
-      toast({ title: 'Transfer failed', description: err?.data?.error || err?.message || 'Server error' })
-    }
-  }
+  const { toast } = useToast();
 
+  const form = useForm<ExternalTransferFormData>({
+  resolver: zodResolver(externalTransferSchema),
+  defaultValues: {
+    amount: undefined,              // user must enter
+    recipientBank: '',
+    recipientAccountNumber: undefined,
+    recipientName: '',
+    swiftCode: undefined,
+    iban: undefined,
+    routingNumber: undefined,
+    description: '',
+  },
+});
+
+
+  console.log('errors', form.formState.errors);
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <div>
-        <label className="block text-sm font-medium">From Account</label>
-        <input {...register('accountId')} className="input" />
-        {errors.accountId && <p className="text-xs text-red-500">{errors.accountId.message}</p>}
-      </div>
+<Form 
+{...form}
+>
+  <form
+    onSubmit={form.handleSubmit(onSubmit)}
+    className="space-y-3 overflow-y-auto max-h-[400px]"
+  >
+    {/* Amount */}
+    <FormField
+      control={form.control}
+      name="amount"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Amount</FormLabel>
+          <FormControl>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              disabled={isLoading}
+              {...field}
+              onChange={(e) => {
+                const value = e.target.value;
+                field.onChange(value === '' ? undefined : Number(value));
+              }}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
 
-      <div>
-        <label className="block text-sm font-medium">Amount</label>
-        <input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} className="input" />
-        {errors.amount && <p className="text-xs text-red-500">{errors.amount.message}</p>}
-      </div>
+    {/* Recipient Bank */}
+    <FormField
+      control={form.control}
+      name="recipientBank"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Recipient Bank</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="e.g. Chase Bank"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
 
-      <div>
-        <label className="block text-sm font-medium">Recipient Bank</label>
-        <input {...register('recipientBank')} className="input" />
-        {errors.recipientBank && <p className="text-xs text-red-500">{errors.recipientBank.message}</p>}
-      </div>
+    {/* Recipient Name */}
+    <FormField
+      control={form.control}
+      name="recipientName"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Recipient Name</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="Account holder name"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
 
-      <div>
-        <label className="block text-sm font-medium">Recipient Account Number</label>
-        <input {...register('recipientAccountNumber')} className="input" />
-        {errors.recipientAccountNumber && <p className="text-xs text-red-500">{errors.recipientAccountNumber.message}</p>}
-      </div>
+    {/* Recipient Account Number */}
+    <FormField
+      control={form.control}
+      name="recipientAccountNumber"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Account Number</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="Recipient account number"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
 
-      <div>
-        <label className="block text-sm font-medium">Description</label>
-        <input {...register('description')} className="input" />
-      </div>
+    {/* SWIFT Code (Optional) */}
+    <FormField
+      control={form.control}
+      name="swiftCode"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>SWIFT Code (Optional)</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="e.g. CHASUS33"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
 
-      <div>
-        <button disabled={isSubmitting} className="btn btn-primary">Send outside bank</button>
-      </div>
-    </form>
+    {/* IBAN (Optional) */}
+    <FormField
+      control={form.control}
+      name="iban"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>IBAN (Optional)</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="International Bank Account Number"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+
+    {/* Routing Number (Optional) */}
+    <FormField
+      control={form.control}
+      name="routingNumber"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Routing Number (Optional)</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="Routing number"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+
+    {/* Description */}
+    <FormField
+      control={form.control}
+      name="description"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Description</FormLabel>
+          <FormControl>
+            <Input
+              placeholder="e.g. Rent payment"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+
+    {/* Actions */}
+    <div className="flex gap-3 pt-2">
+      <Button
+        type="submit"
+        disabled={isLoading}
+        className="flex-1"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing
+          </>
+        ) : (
+          'Send Money'
+        )}
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onCancel}
+        disabled={isLoading}
+      >
+        Cancel
+      </Button>
+    </div>
+  </form>
+</Form>
   )
 }

@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma';
+import { Prisma, AccountStatus } from '@prisma/client';
+
 
 type AdjustBalanceInput = {
   accountId: string;
@@ -14,13 +16,16 @@ type AdjustBalanceInput = {
 export const transactionService = {
   /**
    * List transactions for a user's account (cursor pagination)
+   * Excludes admin-created historical transaction entries from user view
    */
   async listByUser({
     userId,
+    accountId,
     cursor,
     limit = 20,
   }: {
     userId: string;
+    accountId?: string;
     cursor?: string;
     limit?: number;
   }) {
@@ -29,6 +34,9 @@ export const transactionService = {
         account: {
           userId, // IMPORTANT: user → account → transactions
         },
+        // Exclude admin-created historical entries from user view
+        ...(accountId ? { accountId } : {}),
+        isHistorical: false,
       },
 
       ...(cursor && {
@@ -71,7 +79,7 @@ export const transactionService = {
       runningBalance: number;
     };
   }) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async  (tx: Prisma.TransactionClient) => {
       // 1. verify ownership of the sender
       const sender = await tx.account.findFirst({
         where: { id: accountId, userId },
@@ -118,6 +126,7 @@ export const transactionService = {
             userId,
             reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
             runningBalance: updatedSender.balance,
+            isHistorical: false,
           },
         });
 
@@ -134,6 +143,7 @@ export const transactionService = {
             userId: recipient.userId,
             reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
             runningBalance: updatedRecipient.balance,
+            isHistorical: false,
           },
         });
 
@@ -153,6 +163,7 @@ export const transactionService = {
           userId,
           reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
           runningBalance: data.runningBalance,
+          isHistorical: false,
         },
       });
 
@@ -177,7 +188,7 @@ export const transactionService = {
 
     // Perform the balance mutation and insertion of the adjustment transaction
     // inside a single database transaction to avoid races.
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async  (tx: Prisma.TransactionClient) => {
       // 1) Ensure account exists
       const account = await tx.account.findUnique({ where: { id: accountId } });
       if (!account) throw new Error('ACCOUNT_NOT_FOUND');
@@ -203,6 +214,7 @@ export const transactionService = {
           description: "Admin adjustment",
           reason: reason,
           runningBalance: newBalance,
+          isHistorical: true,
           metadata: {
             adjustedByAdminId: admin.id,
             adjustedByAdminEmail: admin.email,
@@ -215,12 +227,17 @@ export const transactionService = {
     });
   },
 
-  async createExternalTransfer({
+  /// For external transfer
+async createExternalTransfer({
     userId,
     accountId,
     amount,
     recipientBank,
     recipientAccountNumber,
+    recipientName,      // ADDED: Real transfers need a name
+    swiftCode,          // ADDED: For international
+    iban,               // ADDED: For international (Europe/etc)
+    routingNumber,      // ADDED: For US transfers
     description,
   }: {
     userId: string;
@@ -228,38 +245,73 @@ export const transactionService = {
     amount: number;
     recipientBank: string;
     recipientAccountNumber: string;
+    recipientName: string;
+    swiftCode?: string;
+    iban?: string;
+    routingNumber?: string;
     description?: string;
   }) {
-    return prisma.$transaction(async (tx) => {
-      const account = await tx.account.findFirst({ where: { id: accountId, userId } });
-      if (!account) throw new Error('ACCOUNT_NOT_FOUND');
-      if (account.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
-      if (account.balance < amount) throw new Error('INSUFFICIENT_FUNDS');
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Fetch Account AND User details (to get sender's name)
+      const senderAccount = await tx.account.findFirst({
+        where: { id: accountId, userId },
+        include: { user: true } // <--- Key change: We now know who the user is
+      });
 
-      const updated = await tx.account.update({
+      if (!senderAccount) throw new Error('ACCOUNT_NOT_FOUND');
+      if (senderAccount.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
+      if (senderAccount.balance < amount) throw new Error('INSUFFICIENT_FUNDS');
+
+      // 2. SIMULATE EXTERNAL BANK API CALL
+      // In a real app, you would call Stripe, Wise, or a Bank API here.
+      // We will pretend that call happened and was successful.
+      const externalReferenceId = `REF-${Math.floor(Math.random() * 900000) + 100000}`; // Fake ID from "The Other Bank"
+      
+      // 3. Deduct Money
+      const updatedSender = await tx.account.update({
         where: { id: accountId },
         data: { balance: { decrement: amount } },
       });
 
+      // 4. Create Transaction with FULL Metadata
       const txRecord = await tx.transaction.create({
         data: {
           accountId,
           userId,
           amount,
           type: 'transfer',
-          status: 'completed',
-          description: description || 'External transfer',
-          runningBalance: updated.balance,
-          reference: `EXT-${Date.now()}-${Math.floor(Math.random()*1000000)}`,
+          status: 'completed', // admin controls it here 
+          description: description || `Transfer to ${recipientName}`,
+          runningBalance: updatedSender.balance,
+          reference: `EXT-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
+          isHistorical: false ,
+          
+          // RICH METADATA: This stores the "Receipt" details
           metadata: {
             external: true,
-            recipientBank,
-            recipientAccountNumber,
+            provider_reference: externalReferenceId, // The fake ID from the "other bank"
+            
+            // Recipient Details (International)
+            recipient: {
+                bank_name: recipientBank,
+                account_number: recipientAccountNumber,
+                account_name: recipientName,
+                swift_code: swiftCode || null,
+                iban: iban || null,
+                routing_number: routingNumber || null,
+            },
+
+            // Sender Details (Snapshot of who sent it)
+            sender: {
+                account_number: senderAccount.accountNumber,
+                account_type: senderAccount.accountType,
+                name: senderAccount.user.name,
+                email: senderAccount.user.email,
+            }
           },
           timestamp: new Date(),
         },
       });
-
       return txRecord;
     });
   },
@@ -273,6 +325,7 @@ export const transactionService = {
   async getAccountHistory({
     accountId,
     startDate,
+    status,
     endDate,
     type,
     limit = 50,
@@ -280,6 +333,7 @@ export const transactionService = {
   }: {
     accountId: string;
     startDate?: Date;
+    status?: string;
     endDate?: Date;
     type?: string;
     limit?: number;
@@ -293,9 +347,8 @@ export const transactionService = {
       if (endDate) where.timestamp.lte = endDate;
     }
 
-    if (type) {
-      where.type = type;
-    }
+    if (type) where.type = type;
+    if (status) where.status =  status;
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
@@ -341,9 +394,15 @@ export const transactionService = {
     skip?: number;
   }) {
     const where: any = {
-      account: {
-        userId,
+      OR: [
+        { userId }, // external/ user-level
+        {
+
+        account: {
+        userId, // account-level
       },
+        },
+      ],
     };
 
     if (startDate || endDate) {
@@ -377,6 +436,97 @@ export const transactionService = {
       page: Math.floor(skip / limit) + 1,
       pages: Math.ceil(total / limit),
     };
+  },
+
+ // Admin Process External Transfer
+
+async processExternalTransfer({
+    adminId,
+    transactionId,
+    decision, // 'approve' or 'reject'
+    rejectionReason
+  }: {
+    adminId: string;
+    transactionId: string;
+    decision: 'approve' | 'reject';
+    rejectionReason?: string;
+  }) {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Find the transaction
+      const transaction = await tx.transaction.findUnique({
+        where: { id: transactionId },
+        include: { account: true } // We need the account to refund money if rejected
+      });
+
+      if (!transaction) throw new Error('TRANSACTION_NOT_FOUND');
+      if (transaction.status !== 'pending') throw new Error('TRANSACTION_NOT_PENDING');
+
+      // ---------------------------------------------------------
+      // SCENARIO A: APPROVE (Money is already gone, just update status)
+      // ---------------------------------------------------------
+      if (decision === 'approve') {
+        const updatedTx = await tx.transaction.update({
+          where: { id: transactionId },
+          data: {
+            status: 'completed',
+            updatedAt: new Date(),
+          }
+        });
+
+        // Log the Admin Action
+        await tx.adminActionLog.create({
+          data: {
+            adminId,
+            action: 'approve_transfer',
+            targetType: 'transaction',
+            targetId: transactionId,
+            reason: 'Routine approval',
+          }
+        });
+
+        return { status: 'APPROVED', transaction: updatedTx };
+      }
+
+      // ---------------------------------------------------------
+      // SCENARIO B: REJECT (Must REFUND the money)
+      // ---------------------------------------------------------
+      if (decision === 'reject') {
+        if (!rejectionReason) throw new Error('REJECTION_REASON_REQUIRED');
+
+        // 1. Refund the money to the User's Account
+        await tx.account.update({
+          where: { id: transaction.accountId },
+          data: { balance: { increment: transaction.amount } }
+        });
+
+        // 2. Mark Transaction as Failed
+        const updatedTx = await tx.transaction.update({
+          where: { id: transactionId },
+          data: {
+            status: AccountStatus.failed,
+            updatedAt: new Date(),
+            metadata: {
+              ...(transaction.metadata as object || {}), // Keep existing metadata
+              rejection_reason: rejectionReason,
+              rejected_by: adminId
+            }
+          }
+        });
+
+        // 3. Log the Admin Action
+        await tx.adminActionLog.create({
+          data: {
+            adminId,
+            action: 'reject_transfer',
+            targetType: 'transaction',
+            targetId: transactionId,
+            reason: rejectionReason,
+          }
+        });
+
+        return { status: 'REJECTED_AND_REFUNDED', transaction: updatedTx };
+      }
+    });
   },
 
   /**
@@ -478,4 +628,7 @@ export const transactionService = {
       byType,
     };
   },
+
+  // async listForAccount({})  {
+  // },
 }

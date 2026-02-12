@@ -25,7 +25,7 @@ export function TransactionFilters() {
   const { filters, sortBy, sortOrder } = useAppSelector(state => state.transactionsUi);
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap gap-2 items-center justify-center">
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="gap-2">
@@ -33,8 +33,8 @@ export function TransactionFilters() {
             Filters
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80">
-          <div className="space-y-4">
+        <PopoverContent className="w-80 backdrop-blur-md">
+          <div className="space-y-4 ">
             <div>
               <label className="text-sm font-medium">Type</label>
               <Select
@@ -133,10 +133,10 @@ export function TransactionFilters() {
       </Button>
 
       <Select value={sortBy} onValueChange={(value) => dispatch(setSortBy(value as any))}>
-        <SelectTrigger className="w-40">
+        <SelectTrigger className="w-40 backdrop-blur-md">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="backdrop-blur-md border-b border-border">
           <SelectItem value="date">Sort by Date</SelectItem>
           <SelectItem value="amount">Sort by Amount</SelectItem>
         </SelectContent>

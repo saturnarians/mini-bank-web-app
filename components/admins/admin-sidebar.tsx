@@ -50,7 +50,7 @@ export function AppSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 hover:bg-muted rounded-lg"
+        className="md:hidden fixed top-4 left-4 z-40 p-2 hover:bg-muted rounded-lg backdrop-blur"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
@@ -58,7 +58,7 @@ export function AppSidebar() {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -66,12 +66,12 @@ export function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border transition-transform duration-300 flex flex-col md:translate-x-0',
+          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border backdrop-blur-md transition-transform duration-300 flex flex-col md:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border backdrop-blur">
           <div className="flex items-center gap-2">
             <Building2 className="h-8 w-8 text-primary" />
             <div>

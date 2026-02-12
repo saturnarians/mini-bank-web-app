@@ -64,20 +64,29 @@ export const transactionHistoryController = {
           startDate: params.startDate ? new Date(params.startDate) : undefined,
           endDate: params.endDate ? new Date(params.endDate) : undefined,
           type: params.type,
+          status: params.status,
           limit: params.limit,
           skip: params.skip,
         });
-      } else if (params.userId || session.role !== "user") {
+      } else if (session.role) {
         // Get history for all user accounts
-        const userId = params.userId || session.id;
         result = await transactionService.getUserTransactionHistory({
-          userId,
+          userId: session.id,
           startDate: params.startDate ? new Date(params.startDate) : undefined,
           endDate: params.endDate ? new Date(params.endDate) : undefined,
           limit: params.limit,
           skip: params.skip,
         });
-      } else {
+       } else if (params.userId) {
+        // admin viewing specific user
+        result = await transactionService.getUserTransactionHistory({
+        userId: params.userId,
+        startDate: params.startDate ? new Date(params.startDate) : undefined,
+        endDate: params.endDate ? new Date(params.endDate) : undefined,
+        limit: params.limit,
+        skip: params.skip,
+  });
+     }else {
         // Admin requesting all transactions
         if (session.role !== "admin" && session.role !== "superadmin") {
           return NextResponse.json(
@@ -87,6 +96,7 @@ export const transactionHistoryController = {
         }
 
         result = await transactionService.getAllTransactions({
+          // accountId: params.accountId,
           startDate: params.startDate ? new Date(params.startDate) : undefined,
           endDate: params.endDate ? new Date(params.endDate) : undefined,
           type: params.type,
