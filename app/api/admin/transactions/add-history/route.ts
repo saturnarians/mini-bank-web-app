@@ -3,6 +3,9 @@ import { authorize } from "@/lib/auth/guard";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+export const dynamic = 'force-dynamic';
+
+
 const addTransactionHistorySchema = z.object({
   accountId: z.string(),
   type: z.enum(['deposit', 'withdrawal', 'transfer', 'adjustment']),

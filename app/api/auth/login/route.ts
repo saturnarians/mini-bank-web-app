@@ -5,6 +5,7 @@ import { ZodError } from 'zod';
 import { setTokenCookie } from '@/lib/auth';
 import { loginSchema } from '@/lib/schemas';
 
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {

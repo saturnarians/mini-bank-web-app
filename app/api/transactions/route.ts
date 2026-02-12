@@ -4,6 +4,12 @@ import { authorize } from "@/lib/auth/guard";
 import { transactionController } from "@/lib/controllers/transactionController";
 import { createTransactionSchema } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
+// export type AccountId = {
+//   accountId: string;
+// }
+
 export const GET = authorize(["user", "admin", "superadmin"], async (req, { session }) => {
   const { searchParams } = new URL(req.url);
 
@@ -28,7 +34,7 @@ export const POST = authorize(
 
     const tx = await transactionController.createUserTransaction({
       session,
-      accountId: body.accountId,
+      accountId: params.accountId,
       body,
     });
 

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { authorize } from '@/lib/auth/guard';
 import { transactionController } from '@/lib/controllers/transactionController';
 
+export const dynamic = 'force-dynamic';
+
 export const POST = authorize(
   ['user', 'admin', 'superadmin'],
   async (req, { params, session }) => {

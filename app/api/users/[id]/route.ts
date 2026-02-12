@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorize } from '@/lib/auth/guard';
 import prisma from '@/lib/prisma';
-import { canManageAdmins } from '@/lib/permission';
+// import { canManageAdmins } from '@/lib/permission';
+
+export const dynamic = 'force-dynamic';
 
 // GET: Single User
 export const GET = authorize(['admin', 'superadmin'], async (req, { params }) => {

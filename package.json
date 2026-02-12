@@ -8,7 +8,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
-    "prisma:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "seed": "node -e \"require('fs').rmSync('node_modules/.prisma', { recursive: true, force: true }); process.exit(0)\" && npm i && npx prisma generate"
   },
   "prisma": {
@@ -54,6 +54,7 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "^8.5.1",
     "framer-motion": "^12.23.26",
+    "geist": "^1.7.0",
     "html2canvas": "^1.4.1",
     "input-otp": "1.4.1",
     "jose": "^5.2.0",

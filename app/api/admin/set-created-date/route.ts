@@ -3,6 +3,8 @@ import { authorize } from '@/lib/auth/guard'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic';
+
 const payloadSchema = z.object({
   entity: z.enum(['user', 'account', 'transaction']),
   id: z.string().min(1),

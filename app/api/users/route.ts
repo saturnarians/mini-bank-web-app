@@ -3,6 +3,8 @@ import { authorize } from '@/lib/auth/guard';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic';
+
 // GET: Fetch all users or search
 export const GET = authorize(['admin', 'superadmin'], async (req) => {
   const { searchParams } = new URL(req.url);

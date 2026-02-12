@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorize } from '@/lib/auth/guard';
 import { accountController } from '@/lib/controllers/accountController';
 
+export const dynamic = 'force-dynamic';
 
 export const POST = authorize(['admin', 'superadmin'], 
   async (req: Request, { params , session } ) => {

@@ -3,6 +3,8 @@ import { authorize } from "@/lib/auth/guard";
 import { prisma } from "@/lib/prisma";
 import { approveTransactionSchema } from "@/lib/schemas";
 
+export const dynamic = 'force-dynamic';
+
 export const POST = authorize(
   ["admin", "superadmin"],
   async (req, { session }) => {

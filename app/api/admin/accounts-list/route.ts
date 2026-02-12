@@ -9,6 +9,8 @@ import { accountService } from '@/lib/services/accountService';
  * Returns accounts with user relationship data (name, email)
  * Used by admin dashboard to display all accounts
  */
+export const dynamic = 'force-dynamic';
+
 export const GET = authorize(['admin', 'superadmin'], async (req) => {
   try {
     const { searchParams } = new URL(req.url);

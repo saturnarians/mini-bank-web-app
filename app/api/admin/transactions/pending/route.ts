@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 export const GET = authorize(
   ["admin", "superadmin"],
   async (req, { session }) => {

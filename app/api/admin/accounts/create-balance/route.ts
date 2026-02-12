@@ -3,6 +3,8 @@ import { authorize } from "@/lib/auth/guard";
 import { adminAccountController } from "@/lib/controllers/adminAccountController";
 import { ZodError } from "zod";
 
+export const dynamic = 'force-dynamic';
+
 type Context = {
   params: any;
   session: {

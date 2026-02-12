@@ -3,6 +3,8 @@ import { authController } from '@/lib/controllers/authController';
 import { setTokenCookie } from '@/lib/auth'; // Ensure this path is correct
 import { ZodError } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Get raw JSON

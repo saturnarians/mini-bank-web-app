@@ -19,6 +19,9 @@ type Context = {
  * Users: see their own transactions
  * Admins: see any user's transactions
  */
+
+export const dynamic = 'force-dynamic';
+
 export const GET = authorize(
   ["user", "admin", "superadmin"],
   async (req: NextRequest, context: Context) => {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorize } from '@/lib/auth/guard';
 import { profileController } from '@/lib/controllers/profileController';
 
+export const dynamic = 'force-dynamic';
 // GET: Fetch current user profile
 export const GET = authorize(['user', 'admin'], async (req, { session }) => {
   try {

@@ -4,6 +4,8 @@ import { generateVerificationToken } from '@/lib/auth';
 import { sendEmail, generateVerificationEmailHtml } from '@/lib/email';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const resendSchema = z.object({
   email: z.string().email(),
 });

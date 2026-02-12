@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { verifyVerificationToken } from '@/lib/auth';
 import { sendEmail, generateWelcomeEmailHtml } from '@/lib/email';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

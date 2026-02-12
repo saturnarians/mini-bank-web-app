@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getSessionFromCookies } from '@/lib/auth'; // Assuming you use NextAuth
 import { transactionService } from '@/lib/services/transactionService'; // Import the function we wrote
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     // 1. Check Authentication

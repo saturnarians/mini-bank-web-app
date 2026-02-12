@@ -3,6 +3,8 @@ import { authorize } from "@/lib/auth/guard";
 import { adjustBalanceController } from "@/lib/controllers/adjustAccountBalanceController";
 import { ZodError } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // 1. We type the Context specifically based on your error
 type Context = {
   params: any;

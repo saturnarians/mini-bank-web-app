@@ -2,6 +2,8 @@ import { authorize } from '@/lib/auth/guard';
 import { accountController } from '@/lib/controllers/accountController';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export const GET = authorize(['user', 'admin', 'superadmin'], async (req, { session }) => {
   // pass whole session object to controller so it can check role and id
   const accounts = await accountController.list(session);
