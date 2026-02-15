@@ -1,0 +1,19 @@
+3.
+
+4. Remove dates of user/account open/creation. 
+
+5. 
+
+6. 
+
+7. Enable email verifcation, resend verification on signin/login requesting for OTP using resend pacakage
+
+8. Allow Pin to send transactions
+
+8. Add skeleton loader in transaction/page.tsx
+
+
+Allow profile photo upload, ID verification and KYC update and Account Update in profile/page.tsx.
+
+allow pdf download and image download of transaction details after account has made transaction
+

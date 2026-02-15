@@ -1,5 +1,5 @@
 import { transactionService } from '@/lib/services/transactionService';
-import { createTransactionSchema, adminAdjustBalanceSchema, transactionSchema } from '@/lib/schemas';
+import { createTransactionSchema, adminAdjustBalanceSchema } from '@/lib/schemas';
 import { CreateTransactionPayload } from '@/lib/types';
 import { z } from 'zod';
 
@@ -41,7 +41,7 @@ export const transactionController = {
   }) {
 
     // Validate user intent
-    const data = transactionSchema.parse(body);
+    const data = createTransactionSchema.parse(body);
 
     return transactionService.createUserTransaction({
       userId: session.id,

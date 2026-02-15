@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,9 @@ import { Skeleton } from '@/components/ui/skeleton';
  * Complete Admin Dashboard Component
  * Manage accounts, balances, and view transaction history
  */
+
+export const dynamic = "force-dynamic";
+
 export function AdminDashboard() {
   // Use admin-specific query that includes user relationship data
   const { data: adminAccounts = [], isLoading, error: queryError, refetch } = useGetAdminAccountsQuery({ status: undefined });

@@ -74,7 +74,8 @@ const balancesByAccountId = useMemo(() => {
   // Default account
   useEffect(() => {
     if (!selectedAccountId && accounts.length > 0) {
-      setSelectedAccountId(accounts[0].id);
+      const firstActive = accounts.find((acc) => acc.status === "active");
+      setSelectedAccountId(firstActive?.id ?? accounts[0].id);
     }
   }, [accounts, selectedAccountId]);
 
@@ -104,6 +105,10 @@ const balancesByAccountId = useMemo(() => {
       });
   }, [transactions, filters, sortBy, sortOrder, selectedAccountId]);
 
+  const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId) ?? null;
+  const isSelectedSuspended =
+    selectedAccount?.status?.toLowerCase() === "suspended";
+
   if (accountsLoading) return <Skeleton className="h-40" />;
 
   return (
@@ -127,6 +132,7 @@ const balancesByAccountId = useMemo(() => {
             <Button
               // size="lg"
               className="flex-1 gap-2 "
+              disabled={isSelectedSuspended}
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -137,6 +143,7 @@ const balancesByAccountId = useMemo(() => {
               // size="lg"
               // variant="ghost"
               className="flex-1 gap-2"
+              disabled={isSelectedSuspended}
               onClick={() => setExternalDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -145,6 +152,15 @@ const balancesByAccountId = useMemo(() => {
           </div>
         )}
       </div>
+
+      {isSelectedSuspended && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4 flex-1" />
+          <AlertDescription>
+            This account is suspended and cannot make transactions. talk to the customer care for help.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Accounts */}
       {accounts.map((acc) => {
@@ -244,9 +260,14 @@ new Intl.NumberFormat('en-NG', {
                 description: "Ledger updated successfully",
               });
               setDialogOpen(false);
-            } catch {
+            } catch (error: any) {
+              const message =
+                error?.data?.message ||
+                error?.data?.error ||
+                "Transaction failed";
               toast({
                 title: "Transaction failed",
+                description: message,
                 variant: "destructive",
               });
             }
@@ -271,9 +292,14 @@ new Intl.NumberFormat('en-NG', {
                 description: "Transfer completed successfully",
               });
               setExternalDialogOpen(false);
-            } catch {
+            } catch (error: any) {
+              const message =
+                error?.data?.message ||
+                error?.data?.error ||
+                "Transaction failed";
               toast({
                 title: "Transaction failed",
+                description: message,
                 variant: "destructive",
               });
             }

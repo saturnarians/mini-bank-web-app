@@ -1,9 +1,10 @@
 'use client';
-
+import React  from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
 import { canAccessPage } from '@/lib/permission';
+import { ToggleTheme } from '@/components/toggleTheme';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -15,6 +16,8 @@ const NAV_ITEMS = [
 export function DashboardHeader() {
   const pathname = usePathname();
   const { user } = useAppSelector(state => state.auth);
+
+  const MemoToggleTheme = React.memo(ToggleTheme);
 
   return (
     // <nav className="flex gap-4 p-4 bg-white border-b">
@@ -38,17 +41,20 @@ export function DashboardHeader() {
     //   })}
     // </nav>
     <div className="border-b border-border bg-card sticky top-0 z-10 backdrop-blur ">
-      <div className="px-6 py-4 flex items-center justify-center md:justify-between">
-        <div>
+      <div className="px-6 py-4 flex space-x-4 justify-center md:justify-between">
+        <div className="flex items-center justify-between gap-4">
+          <MemoToggleTheme/>
           <h2 className="md:text-2xl text-md font-bold">Welcome back, {user?.name?.split(' ')[0]}</h2>
-          <p className="text-muted-foreground text-sm mt-1">
+        </div>
+        <div>
+        <p className="text-muted-foreground md:text-sm text-sm">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             })}
-          </p>
+        </p>
         </div>
       </div>
     </div>

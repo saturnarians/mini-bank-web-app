@@ -200,7 +200,7 @@ export function PendingTransactionsViewer({
 
       {/* Transactions Table */}
       {!loading && !error && filteredTransactions.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="w-auto overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 dark:bg-slate-800/50">

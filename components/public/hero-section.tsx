@@ -29,7 +29,7 @@ export const Hero = () => {
 
         {/* Glassmorphic Bank Card */}
 
-        <div className="relative">
+        <div className="relative z-50 ">
           <div className="bg-primary/90 backdrop-blur-sm border border-border/10 rounded-3xl p-8 shadow-2xl">
             <div className="bg-[#4ade80]/20 text-[#4ade80] w-fit px-4 py-1 rounded-full text-xs mb-4">
               100% Protected

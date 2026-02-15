@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma, AccountStatus } from '@prisma/client';
 
+const isSuspended = (status?: string | null) =>
+  (status ?? '').toLowerCase() === 'suspended';
 
 type AdjustBalanceInput = {
   accountId: string;
@@ -86,7 +88,7 @@ export const transactionService = {
       });
 
       if (!sender) throw new Error('ACCOUNT_NOT_FOUND');
-      if (sender.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
+      if (isSuspended(sender.status)) throw new Error('ACCOUNT_SUSPENDED');
 
       // 2. Basic balance guard
       if ((data.type === 'withdrawal' || data.type === 'transfer') && sender.balance < data.amount) {
@@ -100,7 +102,7 @@ export const transactionService = {
 
         const recipient = await tx.account.findUnique({ where: { id: data.recipientAccountId } });
         if (!recipient) throw new Error('RECIPIENT_NOT_FOUND');
-        if (recipient.status === 'SUSPENDED') throw new Error('RECIPIENT_SUSPENDED');
+        if (isSuspended(recipient.status)) throw new Error('RECIPIENT_SUSPENDED');
 
         // perform atomic balance updates
         const updatedSender = await tx.account.update({
@@ -259,7 +261,7 @@ async createExternalTransfer({
       });
 
       if (!senderAccount) throw new Error('ACCOUNT_NOT_FOUND');
-      if (senderAccount.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
+      if (isSuspended(senderAccount.status)) throw new Error('ACCOUNT_SUSPENDED');
       if (senderAccount.balance < amount) throw new Error('INSUFFICIENT_FUNDS');
 
       // 2. SIMULATE EXTERNAL BANK API CALL

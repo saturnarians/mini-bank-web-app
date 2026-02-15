@@ -435,7 +435,7 @@ export function AdminDashboardResponsive() {
         </TabsContent>
 
         {/* Approvals Tab */}
-        <TabsContent value="approvals" className="space-y-4">
+        <TabsContent value="approvals" className=" overflow-x-auto space-y-4">
           <Card className="p-4 md:p-6">
             <PendingTransactionsViewer onActionComplete={fetchAccounts} />
           </Card>

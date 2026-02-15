@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -9,6 +9,7 @@ import { LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut, Menu,
 import { Button } from '@/components/ui/button';
 // import { hasPermission } from '@/lib/permission';
 import { cn } from '@/lib/utils';
+import { Logo } from "../image";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -16,7 +17,8 @@ export function AppSidebar() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.auth);
   const [isOpen, setIsOpen] = useState(false);
-
+ 
+  const MemoLogo = React.memo(Logo)
   const handleLogout = async () => {
     await dispatch(logoutUser());
     router.push('/');
@@ -87,7 +89,8 @@ export function AppSidebar() {
         {/* Header */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
+            {/* <Building2 className="h-8 w-8 text-primary" /> */}
+            < MemoLogo />
             <div>
               <h1 className="text-lg font-bold">Patheon Bank</h1>
               <p className="text-xs text-muted-foreground">Banking With Ease</p>

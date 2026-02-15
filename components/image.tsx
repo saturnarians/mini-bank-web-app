@@ -8,8 +8,8 @@ export function Logo() {
         <Image 
           src="/icon.png" 
           alt="Patheon Bank" 
-          width={80} 
-          height={80} 
+          width={50} 
+          height={50} 
           priority // Ensures the logo loads fast as a key UI element
         />
         </div>

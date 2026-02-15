@@ -160,7 +160,17 @@ if (pathname === '/login') {
 
   /** ---------- Mobile Navbar ---------- */
   const mobileNavbar = (
-    <div className="md:hidden fixed top-0 left-0 flex items-center justify-between w-full px-4">
+    <motion.div 
+    className="md:hidden fixed top-0 left-0 flex items-center justify-between w-full px-4"
+    initial={{ y: 0, opacity: 1 }}
+    animate={{
+      y: scrollDir === "down" ? "-100%" : "0%",
+      opacity: scrollDir === "down" ? 0 : 1,
+    }}
+    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    // style={{ willChange: "transform, opacity" }} // GPU optimization
+    >
+
       <div 
       className="flex justify-start mt-6 cursor-pointer"
       onClick={() => dispatch(setCurrentPage("home"))}
@@ -236,7 +246,7 @@ if (pathname === '/login') {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (

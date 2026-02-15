@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -8,6 +8,7 @@ import { logoutUser } from '@/store/slices/auth-slice';
 import { LayoutDashboard, CreditCard, TrendingUp, Users, Settings, LogOut, Menu, X, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Logo } from "../image";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -20,6 +21,8 @@ export function AppSidebar() {
     await dispatch(logoutUser());
     router.push('/');
   };
+
+  const MemoLogo = React.memo(Logo);
 
   const menuItems = [
     {
@@ -66,17 +69,18 @@ export function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border backdrop-blur-md transition-transform duration-300 flex flex-col md:translate-x-0',
+          'fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border backdrop-blur-md transition-transform duration-300 flex flex-col md:translate-x-0 text-foreground',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header */}
         <div className="p-6 border-b border-border backdrop-blur">
           <div className="flex items-center gap-2">
-            <Building2 className="h-8 w-8 text-primary" />
+            {/* <Building2 className="h-8 w-8 text-primary" /> */}
+            <MemoLogo />
             <div>
               <h1 className="text-lg font-bold">Mini Bank</h1>
-              <p className="text-xs text-muted-foreground">Banking Platform</p>
+              <p className="text-xs text-muted-foreground">Banking Dashboard</p>
             </div>
           </div>
         </div>
