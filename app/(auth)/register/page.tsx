@@ -6,6 +6,7 @@ import { registerSchema, RegisterFormData } from "@/lib/schemas"; // Ensure this
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { registerUser } from "@/store/slices/auth-slice";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -53,9 +54,17 @@ export default function RegisterForm() {
 
   const onSubmit = async (values: RegisterFormData) => {
     try {
-      await dispatch(registerUser(values)).unwrap();
-      router.push("/dashboard");
-    } catch (err) {
+      const result = await dispatch(registerUser(values)).unwrap();
+      if (result?.requiresVerification) {
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
+      router.push("/login");
+    } catch (err: any) {
+      if (err?.redirectTo) {
+        router.push(`${err.redirectTo}?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
       console.error("Submission failed", err);
     }
   };
@@ -173,6 +182,12 @@ export default function RegisterForm() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Creating account..." : "Register"}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
           </form>
         </Form>
       </CardContent>

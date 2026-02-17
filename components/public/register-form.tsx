@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { registerUser } from "@/store/slices/auth-slice";
 import { registerSchema, type RegisterFormData } from "@/lib/schemas";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Form,
   FormControl,
@@ -38,14 +39,22 @@ export default function RegisterForm() {
   // 2. Define the submit handler
   const onSubmit = async (values: RegisterFormData) => {
     try {
-      await dispatch(registerUser({
+      const result = await dispatch(registerUser({
         name: values.name,
         email: values.email,
         password: values.password,
+        accountType: values.accountType,
       })).unwrap();
-      
-      router.push("/dashboard");
-    } catch (err) {
+      if (result?.requiresVerification) {
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
+      router.push("/login");
+    } catch (err: any) {
+      if (err?.redirectTo) {
+        router.push(`${err.redirectTo}?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
       // Errors are handled by the Redux state 'error'
       console.error("Registration failed:", err);
     }
@@ -130,6 +139,12 @@ export default function RegisterForm() {
               "Register"
             )}
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
         </form>
       </Form>
     </div>

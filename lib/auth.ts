@@ -109,3 +109,59 @@ export async function verifyVerificationToken(token: string): Promise<string | n
     return null;
   }
 }
+
+type EmailOtpPayload = {
+  email: string;
+  code: string;
+  type: "email-otp";
+};
+
+export const EMAIL_OTP_COOKIE = "email_verification_token";
+
+export function generateEmailOtpCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export async function generateEmailOtpToken(args: {
+  email: string;
+  code: string;
+  expiresIn?: number;
+}) {
+  const expiresIn = args.expiresIn ?? 10 * 60;
+  return await new SignJWT({
+    email: args.email,
+    code: args.code,
+    type: "email-otp",
+  } satisfies EmailOtpPayload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime(`${expiresIn}s`)
+    .sign(JWT_SECRET);
+}
+
+export async function verifyEmailOtpToken(token: string): Promise<EmailOtpPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const data = payload as Partial<EmailOtpPayload>;
+    if (data.type !== "email-otp" || !data.email || !data.code) return null;
+    return data as EmailOtpPayload;
+  } catch {
+    return null;
+  }
+}
+
+export function setEmailOtpCookie(response: NextResponse, token: string, maxAgeSec = 10 * 60) {
+  response.cookies.set(EMAIL_OTP_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: maxAgeSec,
+  });
+}
+
+export function clearEmailOtpCookie(response: NextResponse) {
+  response.cookies.delete({
+    name: EMAIL_OTP_COOKIE,
+    path: "/",
+  });
+}

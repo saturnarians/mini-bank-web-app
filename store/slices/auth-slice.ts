@@ -2,6 +2,23 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState, User } from "@/lib/types";
 import type { LoginFormData, RegisterFormData } from "@/lib/schemas";
 
+type ApiErrorPayload = {
+  error?: string;
+  message?: string;
+  redirectTo?: string;
+  requiresVerification?: boolean;
+  email?: string;
+};
+
+function toErrorMessage(payload: unknown): string {
+  if (typeof payload === "string") return payload;
+  if (payload && typeof payload === "object") {
+    const p = payload as ApiErrorPayload;
+    return p.message || p.error || "Request failed";
+  }
+  return "Request failed";
+}
+
 /**
  * Initial auth state
  * - user: hydrated from /me
@@ -31,9 +48,10 @@ export const loginUser = createAsyncThunk(
         body: JSON.stringify(data),
       });
 
+      const result = await res.json();
+
       if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result?.error || "Login failed");
+        return rejectWithValue(result);
       }
 
       // 🔑 identity hydration happens immediately Hydrate user from /me
@@ -78,7 +96,7 @@ export const registerUser = createAsyncThunk(
       // await dispatch(getCurrentUser()).unwrap() how can i use the dispatch
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result?.error || "Registration failed");
+      if (!res.ok) return rejectWithValue(result);
 
       return result;
     } catch (err: any) {
@@ -116,7 +134,15 @@ export const getCurrentUser = createAsyncThunk(
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async (
-    data: { name?: string; phone?: string; address?: string },
+    data: {
+      name?: string;
+      phone?: string;
+      address?: string;
+      profilePhotoUrl?: string;
+      idCardUrl?: string;
+      kycStatus?: "not_submitted" | "pending" | "verified" | "rejected";
+      kycUpdatedAt?: string | null;
+    },
     { rejectWithValue },
   ) => {
     try {
@@ -201,7 +227,7 @@ export const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = toErrorMessage(action.payload);
       })
 
       // REGISTER
@@ -216,7 +242,7 @@ export const authSlice = createSlice({
 
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = toErrorMessage(action.payload);
       })
 
       // HYDRATE
@@ -256,7 +282,7 @@ export const authSlice = createSlice({
       })
       .addCase(changePassword.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = toErrorMessage(action.payload);
       });
   },
 });

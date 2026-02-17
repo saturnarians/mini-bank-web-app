@@ -42,6 +42,7 @@ export function TransactionForm({
       type: 'transfer', // locked for this UI
       amount: undefined,
       description: '',
+      pin: '',
       recipientAccountId: undefined,
     },
   });
@@ -117,6 +118,27 @@ export function TransactionForm({
               <FormControl>
                 <Input
                   placeholder="e.g. Rent payment"
+                  disabled={isLoading}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Transaction PIN */}
+        <FormField
+          control={form.control}
+          name="pin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Transaction PIN</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  placeholder="4-digit PIN"
                   disabled={isLoading}
                   {...field}
                 />

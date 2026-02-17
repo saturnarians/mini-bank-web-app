@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { transactionController } from "@/lib/controllers/transactionController";
+import { assertTransactionPin } from "@/lib/transaction-pin";
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export const POST = authorize(
     try {
       const body = await req.json();
       const accountId = body?.accountId;
+      assertTransactionPin(body?.pin);
 
       if (!accountId) {
         return NextResponse.json(
@@ -89,6 +91,11 @@ export const POST = authorize(
           return NextResponse.json(
             { error: error.message, message: 'Insufficient funds.' },
             { status: 422 }
+          );
+        case 'INVALID_TRANSACTION_PIN':
+          return NextResponse.json(
+            { error: error.message, message: 'Invalid transaction PIN.' },
+            { status: 403 }
           );
         default:
           console.error('Create transaction error:', error);

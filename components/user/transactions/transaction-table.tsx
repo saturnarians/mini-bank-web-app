@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Transaction } from '@/lib/types';
 import {
   Table,
@@ -11,12 +12,24 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TransactionDetailModal } from './transaction-detail-modal';
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  accountNumberById?: Record<string, string>;
+  userName?: string;
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ transactions, accountNumberById, userName }: TransactionTableProps) {
+  const [selected, setSelected] = useState<Transaction | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const selectedAccountNumber = useMemo(() => {
+    if (!selected || !accountNumberById) return undefined;
+    return accountNumberById[selected.accountId];
+  }, [selected, accountNumberById]);
+
   const getIcon = (type: Transaction['type']) => {
     switch (type) {
       case 'deposit':
@@ -54,6 +67,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="whitespace-nowrap">
@@ -76,17 +90,37 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(txn.timestamp).toLocaleDateString()}
                 </TableCell>
+                <TableCell>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelected(txn);
+                      setOpen(true);
+                    }}
+                  >
+                    Details
+                  </Button>
+                </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                 No transactions found
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
+
+      <TransactionDetailModal
+        open={open}
+        transaction={selected}
+        accountNumber={selectedAccountNumber}
+        userName={userName}
+        onOpenChange={setOpen}
+      />
     </div>
   );
 }

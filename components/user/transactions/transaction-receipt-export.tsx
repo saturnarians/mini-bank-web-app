@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Transaction } from '@/lib/types';
-import { Download, Image as ImageIcon, FileText } from 'lucide-react';
+import { Image as ImageIcon, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 interface TransactionReceiptExportProps {

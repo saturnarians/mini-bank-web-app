@@ -6,14 +6,13 @@
 
 6. 
 
-7. Enable email verifcation, resend verification on signin/login requesting for OTP using resend pacakage
+7. 
 
-8. Allow Pin to send transactions
+8. 
 
 8. Add skeleton loader in transaction/page.tsx
 
 
-Allow profile photo upload, ID verification and KYC update and Account Update in profile/page.tsx.
-
-allow pdf download and image download of transaction details after account has made transaction
+1. Allow profile photo upload, ID verification and KYC update(allow users just upload their IDCard) and Account Update section in profile/page.tsx.
+2. Allow pdf download and image download of transaction details after an user/account has made transaction
 

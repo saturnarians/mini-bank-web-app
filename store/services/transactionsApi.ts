@@ -150,6 +150,7 @@ export const transactionApi = createApi({
       {
         accountId: string;
         amount: number;
+        pin: string;
         recipientName: string;
         recipientBank: string;
         recipientAccountNumber: number;

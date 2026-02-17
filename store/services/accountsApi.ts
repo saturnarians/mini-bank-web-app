@@ -6,6 +6,14 @@ type GetAccountsParams = {
   status?: "active" | "suspended";
 };
 
+type UpdateAccountPayload = {
+  id: string;
+  data: {
+    accountType?: "checking" | "savings" | "investment";
+    status?: "active" | "suspended";
+  };
+};
+
 // -------------  For RTK Query Params  -------------
 // export type GetAccountsParams = {
 //   status?: string;
@@ -139,6 +147,21 @@ export const accountApi = createApi({
     }),
 
     // ======================
+    // UPDATE ACCOUNT
+    // ======================
+    updateAccount: builder.mutation<Account, UpdateAccountPayload>({
+      query: ({ id, data }) => ({
+        url: `/accounts/${id}`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Account", id },
+        { type: "Account", id: "LIST" },
+      ],
+    }),
+
+    // ======================
     // GET ACCOUNTS (ADMIN)
     // Admin-specific query that includes user relationship data
     // ======================
@@ -165,4 +188,5 @@ export const {
   useCreateAccountMutation,
   useSuspendAccountMutation,
   useResumeAccountMutation,
+  useUpdateAccountMutation,
 } = accountApi;

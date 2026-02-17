@@ -2,6 +2,7 @@ import { TransactionFormData } from '@/lib/schemas';
 
 // -------------------- Roles --------------------
 export type UserRole = 'superadmin' | 'admin' | 'user';
+export type KycStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
 
 //Account Status Types (System intention  )
 export type AccountStatus = 'active' | 'inactive' | 'failed' | 'suspended';
@@ -64,6 +65,10 @@ export interface User {
   emailVerified: boolean;
   phone?: string;
   address?: string;
+  profilePhotoUrl?: string;
+  idCardUrl?: string;
+  kycStatus?: KycStatus;
+  kycUpdatedAt?: string;
   accounts?: Account[];
   createdAt: string;
 }

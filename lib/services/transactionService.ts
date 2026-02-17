@@ -78,7 +78,7 @@ export const transactionService = {
       amount: number;
       description: string;
       recipientAccountId?: string;
-      runningBalance: number;
+      runningBalance?: number;
     };
   }) {
     return prisma.$transaction(async  (tx: Prisma.TransactionClient) => {
@@ -164,7 +164,11 @@ export const transactionService = {
           timestamp: new Date(),
           userId,
           reference: `TX-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
-          runningBalance: data.runningBalance,
+          runningBalance:
+            data.runningBalance ??
+            (data.type === 'deposit'
+              ? sender.balance + data.amount
+              : sender.balance - data.amount),
           isHistorical: false,
         },
       });

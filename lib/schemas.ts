@@ -52,6 +52,7 @@ export const transactionSchema = z
     type: z.enum(['deposit', 'withdrawal', 'transfer']),
     amount: z.number().positive('Amount must be greater than 0'),
     description: z.string().min(1, 'Description is required'),
+    pin: z.string().regex(/^\d{4}$/, 'Transaction PIN must be 4 digits'),
     recipientAccountId: z.string().optional(), // only needed for transfers
     runningBalance: z.number(),
     status: z.enum(['pending', 'completed', 'failed']),
@@ -72,6 +73,7 @@ export const transactionSchema = z
 export const createTransactionSchema = z.object({
   type: z.enum(['deposit', 'withdrawal', 'transfer']),
   amount: z.number().positive('Amount must be greater than 0'),
+  pin: z.string().regex(/^\d{4}$/, 'Transaction PIN must be 4 digits'),
   recipientAccountId: z.string().optional(), // only needed for transfers
   description: z.string().min(1, 'Description is required'),
 });
@@ -110,6 +112,8 @@ export const rejectTransactionSchema = z.object({
 });
 
 export const externalTransferSchema = z.object({
+  accountId: z.string().min(1, "Account is required"),
+
   amount: z
     .number({
       required_error: 'Amount is required',
@@ -156,6 +160,8 @@ export const externalTransferSchema = z.object({
     .string()
     .optional()
     .or(z.literal('')),
+
+  pin: z.string().regex(/^\d{4}$/, 'Transaction PIN must be 4 digits'),
 });
 
 // -------------------- Export TypeScript types --------------------

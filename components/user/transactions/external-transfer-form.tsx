@@ -45,6 +45,7 @@ export function ExternalTransferForm({
     iban: undefined,
     routingNumber: undefined,
     description: '',
+    pin: '',
   },
 });
 
@@ -207,6 +208,27 @@ export function ExternalTransferForm({
           <FormControl>
             <Input
               placeholder="e.g. Rent payment"
+              disabled={isLoading}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+
+    {/* Transaction PIN */}
+    <FormField
+      control={form.control}
+      name="pin"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Transaction PIN</FormLabel>
+          <FormControl>
+            <Input
+              type="password"
+              placeholder="4-digit PIN"
+              maxLength={4}
               disabled={isLoading}
               {...field}
             />

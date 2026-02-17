@@ -29,6 +29,7 @@ import { ExternalTransferDialog }from '@/components/user/transactions/external-t
 export default function TransactionsPage() {
   // --- UI STATE (Redux) ---
   const { filters, sortBy, sortOrder } = useAppSelector((state) => state.transactionsUi);
+  const { user } = useAppSelector((state) => state.auth);
 
   // --- LOCAL STATE ---
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -108,6 +109,14 @@ const balancesByAccountId = useMemo(() => {
   const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId) ?? null;
   const isSelectedSuspended =
     selectedAccount?.status?.toLowerCase() === "suspended";
+
+  const accountNumberById = useMemo(
+    () =>
+      Object.fromEntries(
+        accounts.map((account) => [account.id, account.accountNumber]),
+      ),
+    [accounts],
+  );
 
   if (accountsLoading) return <Skeleton className="h-40" />;
 
@@ -235,7 +244,11 @@ new Intl.NumberFormat('en-NG', {
           </CardHeader>
           <CardContent className="p-0 sm:p-6 flex-1">
             <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0">
-              <TransactionTable transactions={filteredTransactions} />
+              <TransactionTable
+                transactions={filteredTransactions}
+                accountNumberById={accountNumberById}
+                userName={user?.name}
+              />
             </div>
           </CardContent>
         </Card>

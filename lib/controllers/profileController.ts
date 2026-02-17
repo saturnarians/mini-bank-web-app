@@ -13,6 +13,10 @@ const updateProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  profilePhotoUrl: z.string().optional(),
+  idCardUrl: z.string().optional(),
+  kycStatus: z.enum(["not_submitted", "pending", "verified", "rejected"]).optional(),
+  kycUpdatedAt: z.union([z.string().datetime(), z.null()]).optional(),
 });
 
 export const profileController = {
@@ -24,7 +28,15 @@ export const profileController = {
 
   async update(userId: string, body: any) {
     const validatedData = updateProfileSchema.parse(body);
-    return profileService.updateProfile(userId, validatedData);
+    const normalized = {
+      ...validatedData,
+      kycUpdatedAt: validatedData.kycUpdatedAt
+        ? new Date(validatedData.kycUpdatedAt)
+        : validatedData.kycUpdatedAt === null
+          ? null
+          : undefined,
+    };
+    return profileService.updateProfile(userId, normalized);
   },
 
   async changePassword(userId: string, body: any) {

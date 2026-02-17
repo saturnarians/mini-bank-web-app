@@ -45,6 +45,10 @@ model User {
   role          String    @default("user")
   phone         String?
   address       String?
+  profilePhotoUrl String?
+  idCardUrl     String?
+  kycStatus     String    @default("not_submitted")
+  kycUpdatedAt  DateTime?
   emailVerified Boolean   @default(false)
   supervisorId  String?   @db.ObjectId
   status        String    @default("active")

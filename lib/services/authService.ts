@@ -133,7 +133,7 @@ async register(data: {
       where: { email: data.email },
     });
 
-    if (!user) throw new Error('INVALID_CREDENTIALS');
+    if (!user) throw new Error('USER_NOT_FOUND');
 
     const isValid = await bcrypt.compare(data.password, user.password);
     if (!isValid) throw new Error('INVALID_CREDENTIALS');

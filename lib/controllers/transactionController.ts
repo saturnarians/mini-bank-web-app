@@ -42,11 +42,12 @@ export const transactionController = {
 
     // Validate user intent
     const data = createTransactionSchema.parse(body);
+    const { pin: _pin, ...txData } = data;
 
     return transactionService.createUserTransaction({
       userId: session.id,
       accountId: accountId,
-      data,
+      data: txData,
     });
   },
 

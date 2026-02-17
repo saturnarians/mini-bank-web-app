@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { loginSchema, type LoginFormData } from '@/lib/schemas';
 import { resolveDashboardByRole } from '@/lib/route-resolver';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { loginUser, clearError } from '@/store/slices/auth-slice';
+import { loginUser } from '@/store/slices/auth-slice';
 import {
   Form,
   FormControl,
@@ -36,14 +37,24 @@ export function LoginForm() {
   });
 
   async function onSubmit(values: LoginFormData) {
-  try {
-    const user = await dispatch(loginUser(values)).unwrap();
-    const redirectTo = resolveDashboardByRole(user.role);
-    router.replace(redirectTo);
-  } catch (err) {
-    console.error("Login error:", err);
+    try {
+      const user = await dispatch(loginUser(values)).unwrap();
+      const redirectTo = resolveDashboardByRole(user.role);
+      router.replace(redirectTo);
+    } catch (err: any) {
+      if (err?.redirectTo) {
+        router.push(`${err.redirectTo}?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
+
+      if (err?.requiresVerification) {
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
+
+      console.error("Login error:", err);
+    }
   }
-}
 
   return (
     <div className="w-full max-w-md space-y-6">
@@ -145,6 +156,12 @@ export function LoginForm() {
           <p className="text-muted-foreground">john@example.com / password123</p>
         </div>
       </div>
+      <p className="text-center text-sm text-muted-foreground">
+        No account yet?{" "}
+        <Link href="/register" className="text-primary hover:underline">
+          Create one
+        </Link>
+      </p>
     </div>
   );
 }
