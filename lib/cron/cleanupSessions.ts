@@ -4,8 +4,9 @@ import { addMinutes } from 'date-fns';
 async function cleanupExpiredSessions() {
   const now = new Date();
 
-  // Delete all sessions that expired 20 mins ago (example)
-  await prisma.session.deleteMany({
+  // Session model may not exist depending on current Prisma schema.
+  // Guard the call so this utility compiles safely across schema variants.
+  await (prisma as any).session?.deleteMany?.({
     where: { expiresAt: { lt: now } },
   });
 

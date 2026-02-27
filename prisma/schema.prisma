@@ -12,7 +12,7 @@ generator client {
 enum AccountStatus {
   completed
   pending
-  failed
+  closed
   suspended
 }
 

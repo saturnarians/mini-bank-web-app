@@ -150,10 +150,10 @@ export function PendingTransactionsViewer({
             />
           </div>
           <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-37.5">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="backdrop-blur-md bg-white/30">
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -173,7 +173,7 @@ export function PendingTransactionsViewer({
       {error && !loading && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
             <div>
               <p className="font-medium text-red-900 dark:text-red-300">{error}</p>
               <Button
@@ -200,7 +200,7 @@ export function PendingTransactionsViewer({
 
       {/* Transactions Table */}
       {!loading && !error && filteredTransactions.length > 0 && (
-        <div className="w-auto overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="min-w-40 max-w-110 md:min-w-110 md:max-w-full lg:w-full overflow-x-auto rounded-lg border border-slate-200">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50 dark:bg-slate-800/50">

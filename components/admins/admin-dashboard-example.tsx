@@ -98,7 +98,7 @@ export function AdminDashboard() {
     fetchAccounts();
   };
 
-  const getStatusBadgeVariant = (status: string): 'default' | 'destructive' | 'secondary' | 'outline' => {
+  const getStatusBadgeVariant = (status?: string): 'default' | 'destructive' | 'secondary' | 'outline' => {
     switch (status) {
       case 'active':
         return 'default';
@@ -224,7 +224,7 @@ export function AdminDashboard() {
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(account.status)}>
-                              {account.status}
+                              {account.status ?? 'unknown'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-slate-600 dark:text-slate-400">

@@ -70,7 +70,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="max-w-md mx-auto my-8">
       <CardHeader>
         <CardTitle>Register</CardTitle>
         <CardDescription>
@@ -131,7 +131,7 @@ export default function RegisterForm() {
                         <SelectValue placeholder="Select account type" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className=" backdrop-blur-md bg-white-1/3">
                       <SelectItem value="checking">Checking</SelectItem>
                       <SelectItem value="savings">Savings</SelectItem>
                       <SelectItem value="investment">Investment</SelectItem>

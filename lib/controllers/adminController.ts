@@ -18,10 +18,11 @@ export const adminController = {
         data: {
           accountId: targetAccountId,
           userId: currentAccount.userId,
-          type: 'deposit', // or 'adjustment' if your enum supports it
+          type: 'adjustment',
           amount: newAmount - currentAccount.balance, // The difference
           description: `Admin Adjustment (Admin ID: ${adminId})`,
           status: 'completed',
+          runningBalance: updated.balance,
           reference: `ADM${Date.now()}`
         }
       });

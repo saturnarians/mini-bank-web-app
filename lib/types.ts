@@ -5,7 +5,7 @@ export type UserRole = 'superadmin' | 'admin' | 'user';
 export type KycStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
 
 //Account Status Types (System intention  )
-export type AccountStatus = 'active' | 'inactive' | 'failed' | 'suspended';
+export type AccountStatus = 'active' | 'inactive' | 'closed' | 'suspended';
 
 // Account Types (Business intention  )
 export type AccountType =  'checking' | 'savings' | 'investment';
@@ -31,7 +31,7 @@ export interface Account {
   accountType: AccountType;
   balance: number;
   currency: 'USD';
-  status: AccountStatus;
+  status?: AccountStatus;
   createdAt: string;
   lastTransactionAt?: string;
   logs?: AccountLog[];

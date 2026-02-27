@@ -33,7 +33,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>

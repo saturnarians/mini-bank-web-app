@@ -5,6 +5,10 @@ import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
+function generateAccountNumber() {
+  return `AC${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+}
+
 // GET: Fetch all users or search
 export const GET = authorize(['admin', 'superadmin'], async (req) => {
   const { searchParams } = new URL(req.url);
@@ -34,7 +38,7 @@ export const GET = authorize(['admin', 'superadmin'], async (req) => {
 // POST: Create a new user (Admin functionality)
 export const POST = authorize(['admin', 'superadmin'], async (req) => {
   const body = await req.json();
-  const { email, password, name, role } = body;
+  const { email, password, name, role, accountType } = body;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return NextResponse.json({ error: 'Email exists' }, { status: 400 });
@@ -48,7 +52,12 @@ export const POST = authorize(['admin', 'superadmin'], async (req) => {
       role: role || 'user',
       password: hashedPassword,
       accounts: {
-        create: { balance: 0, currency: 'USD' }
+        create: {
+          balance: 0,
+          currency: 'USD',
+          accountType: accountType || 'checking',
+          accountNumber: generateAccountNumber(),
+        }
       }
     }
   });

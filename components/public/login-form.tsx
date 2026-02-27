@@ -137,16 +137,16 @@ export function LoginForm() {
         </form>
       </Form>
 
-      <div className="relative">
+      {/* <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-background text-muted-foreground">Demo Credentials</span>
         </div>
-      </div>
+      </div> */}
 
-      <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
+      {/* <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
         <div>
           <p className="font-semibold">Admin Account:</p>
           <p className="text-muted-foreground">admin@bank.com / password123</p>
@@ -155,7 +155,7 @@ export function LoginForm() {
           <p className="font-semibold">Regular User:</p>
           <p className="text-muted-foreground">john@example.com / password123</p>
         </div>
-      </div>
+      </div> */}
       <p className="text-center text-sm text-muted-foreground">
         No account yet?{" "}
         <Link href="/register" className="text-primary hover:underline">

@@ -23,7 +23,7 @@ export const accountSchema = z.object({
   accountNumber: z.string().min(10, 'Account number must be at least 10 characters'),
   accountType: z.enum(['checking', 'savings', 'investment']),
   initialBalance: z.coerce.number().min(0, 'Balance cannot be negative'),
-  status: z.enum(['active', 'inactive', 'closed']).default('active'),
+  status: z.enum(['active', 'inactive', 'closed', 'suspended']),
 });
 
 // Only fields the user can set when creating an account
@@ -167,11 +167,11 @@ export const externalTransferSchema = z.object({
 // -------------------- Export TypeScript types --------------------
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
-export type AccountFormData = z.infer<typeof accountSchema>;       // entity shape for full Account
+export type AccountFormData = z.infer<typeof accountSchema>;       // entity shape for full Account;
 export type CreateAccountFormData = z.infer<typeof createAccountSchema>; // input shape
 export type UpdateAccountFormData = z.infer<typeof updateAccountSchema>;
 export type SuspendAccountFormData = z.infer<typeof suspendAccountSchema>;
-export type suspendAccountFormData =  z.infer<typeof resumeAccountSchema>;
+export type ResumeAccountFormData =  z.infer<typeof resumeAccountSchema>;
 export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type UserFormData = z.infer<typeof userSchema>;
 export type AdminAdjustBalanceFormData = z.infer<typeof adminAdjustBalanceSchema>;

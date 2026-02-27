@@ -509,7 +509,7 @@ async processExternalTransfer({
         const updatedTx = await tx.transaction.update({
           where: { id: transactionId },
           data: {
-            status: AccountStatus.failed,
+            status: AccountStatus.closed,
             updatedAt: new Date(),
             metadata: {
               ...(transaction.metadata as object || {}), // Keep existing metadata

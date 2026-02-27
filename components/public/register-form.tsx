@@ -61,11 +61,11 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow rounded">
+    <div className="min-w-40 max-w-110 md:min-w-110 md:max-w-full lg:w-full mb-8 mx-auto p-6 shadow rounded">
       <h2 className="text-2xl mb-4 font-bold">Register</h2>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 backdrop-blur-md bg-white">
           
           <FormField
             control={form.control}

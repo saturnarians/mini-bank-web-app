@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/select';
 import { Loader } from 'lucide-react';
 
+
+
 interface AccountFormProps {
   account?: Account;
   isLoading?: boolean;
@@ -38,6 +40,7 @@ export function AccountForm({ account, isLoading, onSubmit, onCancel }: AccountF
       accountNumber: account?.accountNumber || '',
       accountType: account?.accountType || 'checking',
       initialBalance: account?.balance ?? 0,
+      status: account?.status || 'active',
     },
   });
 

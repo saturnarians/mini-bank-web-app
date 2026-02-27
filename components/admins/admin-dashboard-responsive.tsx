@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronRight, Plus, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 
 /**
  * Mobile-Responsive Admin Dashboard Component
@@ -117,7 +117,7 @@ export function AdminDashboardResponsive() {
     fetchAccounts();
   };
 
-  const getStatusBadgeVariant = (status: string): 'default' | 'destructive' | 'secondary' | 'outline' => {
+  const getStatusBadgeVariant = (status?: string): 'default' | 'destructive' | 'secondary' | 'outline' => {
     switch (status) {
       case 'active':
         return 'default';
@@ -216,8 +216,8 @@ export function AdminDashboardResponsive() {
   );
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <Tabs defaultValue="accounts" className="w-full">
+    <div className="space-y-4 md:space-y-6 overflow-hidden min-w-0">
+      <Tabs defaultValue="accounts" className="w-full overflow-hidden min-w-0">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 gap-1 md:gap-2">
           <TabsTrigger value="accounts" className="text-xs md:text-sm">
             Accounts
@@ -246,7 +246,7 @@ export function AdminDashboardResponsive() {
                   className="w-full text-sm"
                 />
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[150px] text-sm">
+                  <SelectTrigger className="w-full md:w-37.5 text-sm">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -303,7 +303,7 @@ export function AdminDashboardResponsive() {
               {/* Desktop View: Table Layout */}
               {!loading && !error && !isMobile && filteredAccounts.length > 0 && (
                 <div className="overflow-x-auto rounded-lg border">
-                  <Table>
+                  <Table className="min-w-full whitespace-nowrap">
                     <TableHeader>
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                         <TableHead className="text-xs md:text-sm">Account Number</TableHead>
@@ -403,7 +403,8 @@ export function AdminDashboardResponsive() {
         {/* Transactions Tab */}
         <TabsContent value="transactions" className="space-y-4">
           {historyAccountId ? (
-            <Card className="p-4 md:p-6">
+            <Card className="p-4 md:p-6 overflow-hidden min-w-0">
+              <CardContent className="p-0 sm:p-6">
               <div className="space-y-4">
                 <Button
                   onClick={() => setHistoryAccountId('')}
@@ -414,13 +415,17 @@ export function AdminDashboardResponsive() {
                   <ArrowLeft className="h-4 w-4" />
                   Back to Accounts
                 </Button>
+              
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                     Account: {historyAccountId}
                   </p>
                 </div>
+                <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0">
                 <TransactionHistoryViewer accountId={historyAccountId} />
+                </div>
               </div>
+              </CardContent>
             </Card>
           ) : (
             <Card className="p-8 md:p-12 text-center">

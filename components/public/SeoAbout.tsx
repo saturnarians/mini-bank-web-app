@@ -1,6 +1,6 @@
 "use client"
 import React from "react";
-import Accordion from "./Accordion";
+// import Accordion from "./Accordion";
 import Meta from "./Meta";
 
 const items = [
@@ -18,7 +18,6 @@ export default function SeoAbout() {
             <h2>About westinLand Bank</h2>
             <p className="fade-in visible">Founded to serve people and businesses with thoughtful banking products.</p>
             <div style={{ marginTop: "1rem" }}>
-              <Accordion items={items} />
             </div>
           </div>
         </div>

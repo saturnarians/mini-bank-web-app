@@ -24,6 +24,7 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
     inactive: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     closed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
   };
+  const status = account.status ?? 'inactive';
 
   const typeLabel = {
     checking: 'Checking',
@@ -75,8 +76,8 @@ export function AccountCard({ account, onEdit, onDelete }: AccountCardProps) {
                 ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
-            <Badge className={statusColor[account.status as keyof typeof statusColor]}>
-              {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
+            <Badge className={statusColor[status as keyof typeof statusColor]}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground">

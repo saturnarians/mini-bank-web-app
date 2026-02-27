@@ -1,12 +1,17 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Essential production settings only
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Always check types
   },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'your-domain.com',
+      },
+    ],
   },
- 
-}
-
-export default nextConfig
+  compiler: {
+    removeConsole: true,
+  },
+};

@@ -99,7 +99,7 @@ export default function AdminPage() {
   const canManageAdmins = currentUser?.role === 'superadmin';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 space-y-4 sm:space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="w-full sm:w-auto">
@@ -219,7 +219,7 @@ export default function AdminPage() {
             <CardDescription>Manage system users and their roles</CardDescription>
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
-            <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0">
+            <div className="overflow-x-auto px-3 pb-3 sm:px-0 sm:pb-0 backdrop-blur-md">
               <UserTable
                 users={users}
                 onEdit={handleOpenDialog}

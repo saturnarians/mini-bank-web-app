@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export default function VerifyEmailPage() {
+function VerifyEmailPageContent() {
   const params = useSearchParams();
   const router = useRouter();
   const initialEmail = params.get("email") || "";
@@ -118,5 +118,13 @@ export default function VerifyEmailPage() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="max-w-md mx-auto mt-8">Loading...</div>}>
+      <VerifyEmailPageContent />
+    </Suspense>
   );
 }

@@ -7,22 +7,26 @@ import { prisma } from "@/lib/prisma";
  * - NO request objects
  * - Predictable inputs only
  */
+
+  type AccountType = "checking" | "savings" | "investment";
+
 export const accountService = {
   /**
    * Create user account
    */
   async create(data: {
     userId: string;
-    accountType: string;
+    accountType?: AccountType;
     balance?: number;
   }) {
+    
     const accountNumber =
       `ACC-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     return prisma.account.create({
       data: {
         userId: data.userId,
-        accountType: data.accountType,
+        accountType: data.accountType || "savings",
         accountNumber,
         currency: "USD",
         status: "active",
@@ -55,7 +59,7 @@ export const accountService = {
   async update(
     accountId: string,
     payload: {
-      accountType?: string;
+      accountType?: AccountType;
       status?: "active" | "suspended";
     },
   ) {

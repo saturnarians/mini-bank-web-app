@@ -10,7 +10,6 @@ import { PageWrapper } from "@/components/public/page-wrapper"
 import { useAppSelector, useAppDispatch } from "@/store/hooks"
 // import { setIsMobile } from "@/store/slices/uiSlice"
 import { LoginForm } from '@/components/public/login-form';
-import  LoginPage  from '@/app/(auth)/login/page'
 
 // when you initiate sentry you add un-comment the sentry export below
 //  the codes and remove the export default function MainContent and leave only Main content

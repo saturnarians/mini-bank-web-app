@@ -4,10 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "clean": "node scripts/clean-next.mjs",
+    "prebuild": "npm run clean",
+    "build": "node scripts/run-next.mjs build",
+    "dev": "node scripts/run-next.mjs dev",
     "lint": "eslint .",
-    "start": "next start",
+    "start": "node scripts/run-next.mjs start",
     "postinstall": "prisma generate",
     "seed": "node -e \"require('fs').rmSync('node_modules/.prisma', { recursive: true, force: true }); process.exit(0)\" && npm i && npx prisma generate"
   },
