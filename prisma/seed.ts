@@ -1,100 +1,131 @@
-import { PrismaClient } from '@prisma/client';
-import bcryptjs from 'bcryptjs';
+import { PrismaClient } from "@prisma/client";
+import bcryptjs from "bcryptjs";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
 
+const envSchema = z.object({
+  SUPERADMIN_EMAIL: z.string().email(),
+  SUPERADMIN_PASSWORD: z.string().min(6),
+  ADMIN_EMAIL: z.string().email(),
+  ADMIN_PASSWORD: z.string().min(6),
+  USER_EMAIL: z.string().email().optional(),
+  USER_PASSWORD: z.string().min(6).optional(),
+});
+
+const parsed = envSchema.safeParse({
+  SUPERADMIN_EMAIL: process.env.SUPERADMIN_EMAIL,
+  SUPERADMIN_PASSWORD: process.env.SUPERADMIN_PASSWORD,
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+  USER_EMAIL: process.env.USER_EMAIL,
+  USER_PASSWORD: process.env.USER_PASSWORD,
+});
+
+// Validate the parsed data if it is !successful
+if (!parsed.success) {
+  console.error("Invalid environment variables for seeding");
+  throw new Error("Invalid environment variables");
+}
+
+const env = parsed.data;
+
 async function main() {
-  console.log('🌱 Seeding database...');
+  const {
+    SUPERADMIN_EMAIL,
+    SUPERADMIN_PASSWORD,
+    ADMIN_EMAIL,
+    ADMIN_PASSWORD,
+    USER_EMAIL,
+    USER_PASSWORD,
+  } = env;
+
+  const userEmail = USER_EMAIL ?? "john@example.com";
+  const userPasswordRaw = USER_PASSWORD ?? "user123";
+
+  console.log("Seeding database...");
 
   // Delete existing users (optional - remove in production)
   // await prisma.user.deleteMany({});
 
-  // Create superadmin user
-  const superadminPassword = await bcryptjs.hash('superadmin123', 10);
+  const superadminPassword = await bcryptjs.hash(SUPERADMIN_PASSWORD, 10);
   const superadmin = await prisma.user.upsert({
-    where: { email: 'superadmin@bank.com' },
-    update: {},
-    create: {
-      email: 'superadmin@bank.com',
-      name: 'SuperAdmin User',
+    where: { email: SUPERADMIN_EMAIL },
+    update: {
+      name: "SuperAdmin User",
       password: superadminPassword,
-      role: 'superadmin',
-      phone: '+1-555-0099',
-      address: '999 Executive Blvd, City, State',
+      role: "superadmin",
+      phone: "+1-555-0099",
+      address: "999 Executive Blvd, City, State",
+      emailVerified: true,
+    },
+    create: {
+      email: SUPERADMIN_EMAIL,
+      name: "SuperAdmin User",
+      password: superadminPassword,
+      role: "superadmin",
+      phone: "+1-555-0099",
+      address: "999 Executive Blvd, City, State",
       emailVerified: true,
     },
   });
 
-  // Create admin user
-  const adminPassword = await bcryptjs.hash('admin123', 10);
+  const adminPassword = await bcryptjs.hash(ADMIN_PASSWORD, 10);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@bank.com' },
-    update: {},
-    create: {
-      email: 'admin@bank.com',
-      name: 'Admin User',
+    where: { email: ADMIN_EMAIL },
+    update: {
+      name: "Admin User",
       password: adminPassword,
-      role: 'admin',
-      phone: '+1-555-0100',
-      address: '123 Main St, City, State',
+      role: "admin",
+      phone: "+1-555-0100",
+      address: "123 Main St, City, State",
       emailVerified: true,
     },
-  });
-
-  // Create manager user
-  // const managerPassword = await bcryptjs.hash('manager123', 10);
-  // const manager = await prisma.user.upsert({
-  //   where: { email: 'manager@bank.com' },
-  //   update: {},
-  //   create: {
-  //     email: 'manager@bank.com',
-  //     name: 'Manager User',
-  //     password: managerPassword,
-  //     role: 'manager',
-  //     phone: '+1-555-0101',
-  //     address: '456 Oak Ave, City, State',
-  //     emailVerified: true,
-  //   },
-  // });
-
-  // Create regular user
-  const userPassword = await bcryptjs.hash('user123', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'john@example.com' },
-    update: {},
     create: {
-      email: 'john@example.com',
-      name: 'John Doe',
-      password: userPassword,
-      role: 'user',
-      phone: '+1-555-0102',
-      address: '789 Pine Rd, City, State',
+      email: ADMIN_EMAIL,
+      name: "Admin User",
+      password: adminPassword,
+      role: "admin",
+      phone: "+1-555-0100",
+      address: "123 Main St, City, State",
       emailVerified: true,
     },
   });
 
-  console.log('✅ Seed completed!');
-  console.log('\n📧 Test Accounts:');
-  console.log('-------------------');
-  console.log('SUPERADMIN:');
-  console.log('  Email: superadmin@bank.com');
-  console.log('  Password: superadmin123');
-  console.log('\nADMIN:');
-  console.log('  Email: admin@bank.com');
-  console.log('  Password: admin123');
-  console.log('\nMANAGER:');
-  // console.log('  Email: manager@bank.com');
-  // console.log('  Password: manager123');
-  console.log('\nUSER:');
-  console.log('  Email: john@example.com');
-  console.log('  Password: user123');
-  console.log('-------------------\n');
+  const userPassword = await bcryptjs.hash(userPasswordRaw, 10);
+  const user = await prisma.user.upsert({
+    where: { email: userEmail },
+    update: {
+      name: "John Doe",
+      password: userPassword,
+      role: "user",
+      phone: "+1-555-0102",
+      address: "789 Pine Rd, City, State",
+      emailVerified: true,
+    },
+    create: {
+      email: userEmail,
+      name: "John Doe",
+      password: userPassword,
+      role: "user",
+      phone: "+1-555-0102",
+      address: "789 Pine Rd, City, State",
+      emailVerified: true,
+    },
+  });
+
+  console.log("Seed completed");
+  console.log("-------------------");
+  console.log(`SUPERADMIN: ${superadmin.email}`);
+  console.log(`ADMIN: ${admin.email}`);
+  console.log(`USER: ${user.email}`);
+  console.log("-------------------");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
-    // process.exit(1);
+    console.error("Seeding failed:", e);
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();

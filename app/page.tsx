@@ -31,7 +31,7 @@ export default function MainContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* <LoginPage /> */}
-      <div className="w-full flex flex-col space-y-26 min-h-screen">
+      <div className="w-full flex flex-col space-y-8 md:space-y-26 min-h-screen">
         <Navbar />
         <main className="flex-1 w-auto mx-auto max-w-full px-2 md:px-4 py-8"> 
           <PageWrapper isActive={currentPage === "home"}>

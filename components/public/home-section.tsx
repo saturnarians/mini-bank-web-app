@@ -45,22 +45,22 @@ export function Home() {
   ];
 
   return (
-    <section className="flex flex-col justify-center items-center w-auto px-6">
+    <section className="flex flex-col justify-center items-center w-auto px-6 m-2">
       <main id="home" className="">
-          <div className="flex flex-col justify-center items-center mb-2 border-b border-border w-auto">
-            <div className="md:mr-8 border border-border rounded-full mb-8">
+          <div className="flex flex-col justify-center space-y-4 items-center mb-2 border-b border-border w-auto">
+            <div className="md:mr-8 border border-border rounded-full ">
             <p className="fade-in font-medium items-center text-xs text-foreground px-1 md:p-2">
               Your future begins with Patheon.
             </p>
             </div>
-            <div className="flex flex-col items-center justify-center mb-8 text-wrap text-center">
+            <div className="flex flex-col items-center justify-center  text-wrap text-center">
                <h1 className="fade-in text-2xl font-semibold md:p-4 mb-4"> $500 Checking bonus On Us</h1>
                <p className="fade-in text-xl font-medium px-2 pb-4"> New customers open an eligible checking account with qualifying direct deposits</p> 
             </div>
             <Button
             variant="default"
             asChild
-            className="fade-in px-6 text-2xl font-medium mb-8 shadow-sm hover:bg-primary/80 py-6 w-50"
+            className="fade-in px-6 text-2xl font-medium  shadow-sm hover:bg-primary/80 py-6 w-50"
             >
               <Link href="/login">
               Get Started <TrendingUp size={70} className="font-medium"/>

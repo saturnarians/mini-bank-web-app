@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
+import { Eye, EyeClosed } from 'lucide-react';
 
 export function LoginForm() {
   const dispatch = useAppDispatch();
@@ -59,7 +60,7 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-balance">Welcome Back</h1>
+        <h1 className="text-2xl font-bold text-balance">Welcome</h1>
         <p className="text-muted-foreground">Sign in to your account to continue</p>
       </div>
 
@@ -100,9 +101,9 @@ export function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm px-2 text-primary hover:underline"
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? <Eye className="h-4 w-4" /> : <EyeClosed className="h-4 w-4" />}
                   </button>
                 </div>
                 <FormControl>

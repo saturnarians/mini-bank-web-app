@@ -5,7 +5,7 @@ import { useAppSelector } from "@/store/hooks";
 import {
   useCreateTransactionMutation,
   useCreateExternalTransferMutation,
-  useGetTransactionsQuery,
+  useLazyGetTransactionsQuery,
 } from "@/store/services/transactionsApi";
 import { useGetAccountsQuery } from "@/store/services/accountsApi";
 import {
@@ -23,8 +23,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { computeBalance } from "@/lib/domain/ledger/computeBalance";
 import { ExternalTransferDialog }from '@/components/user/transactions/external-transfer-dialog';
+import type { Transaction } from "@/lib/types";
 
 export default function TransactionsPage() {
   // --- UI STATE (Redux) ---
@@ -33,10 +33,13 @@ export default function TransactionsPage() {
 
   // --- LOCAL STATE ---
   const [dialogOpen, setDialogOpen] = useState(false);
-   const [externalDialogOpen, setExternalDialogOpen] = useState(false);
+  const [externalDialogOpen, setExternalDialogOpen] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     null,
   );
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   
   const { toast } = useToast();
 
@@ -44,11 +47,8 @@ export default function TransactionsPage() {
   const { data: accounts = [], isLoading: accountsLoading } =
     useGetAccountsQuery({});
 
-  const {
-    data: transactionsData,
-    isLoading: txLoading,
-    error: txError,
-  } = useGetTransactionsQuery();
+  const [fetchTransactions, { isFetching: txFetching, error: txError }] =
+    useLazyGetTransactionsQuery();
 
   const [createTransaction, { isLoading: isSubmitting }] =
     useCreateTransactionMutation();
@@ -56,21 +56,28 @@ export default function TransactionsPage() {
   const [createExternalTransfer, { isLoading: isExternalSubmitting }] =
     useCreateExternalTransferMutation();
 
-  // --- DERIVED ---
-  const transactions = transactionsData?.transactions ?? [];
-// 2. Group transactions for individual accounts (Syncing logic with computeBalance)
-const balancesByAccountId = useMemo(() => {
-  const map: Record<string, number> = {};
+  const loadTransactions = async ({ reset = false }: { reset?: boolean } = {}) => {
+    if (!selectedAccountId) return;
 
-  for (const tx of transactions) {
-    // We add this check to match what computeBalance is doing!
-    if (tx.status !== "completed") continue; 
-    
-    map[tx.accountId] = (map[tx.accountId] ?? 0) + tx.amount;
-  }
+    try {
+      const data = await fetchTransactions(
+        {
+          accountId: selectedAccountId,
+          ...(reset ? {} : nextCursor ? { cursor: nextCursor } : {}),
+        },
+        false,
+      ).unwrap();
 
-  return map;
-}, [transactions]);
+      setTransactions((prev) =>
+        reset ? data.transactions : [...prev, ...data.transactions],
+      );
+      setNextCursor(data.nextCursor ?? null);
+    } catch {
+      // Request errors are surfaced through txError.
+    } finally {
+      setIsInitialLoading(false);
+    }
+  };
 
   // Default account
   useEffect(() => {
@@ -80,12 +87,18 @@ const balancesByAccountId = useMemo(() => {
     }
   }, [accounts, selectedAccountId]);
 
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    setTransactions([]);
+    setNextCursor(null);
+    setIsInitialLoading(true);
+    void loadTransactions({ reset: true });
+  }, [selectedAccountId]);
+
   // --- FILTER + SORT ---
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((tx) => {
-        // Filter by selected account
-        if (selectedAccountId && tx.accountId !== selectedAccountId) return false;
         if (filters.type && tx.type !== filters.type) return false;
         if (filters.status && tx.status !== filters.status) return false;
         if (
@@ -104,7 +117,7 @@ const balancesByAccountId = useMemo(() => {
             : new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
         return sortOrder === "asc" ? compare : -compare;
       });
-  }, [transactions, filters, sortBy, sortOrder, selectedAccountId]);
+  }, [transactions, filters, sortBy, sortOrder]);
 
   const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId) ?? null;
   const isSelectedSuspended =
@@ -173,7 +186,6 @@ const balancesByAccountId = useMemo(() => {
 
       {/* Accounts */}
       {accounts.map((acc) => {
-        const balance = balancesByAccountId[acc.id] ?? 0;
         /*
         If you ever need multi-currency later, this evolves into:
 
@@ -193,9 +205,8 @@ new Intl.NumberFormat('en-NG', {
                 {acc.accountType} — ****{acc.accountNumber.slice(-4)}
               </p>
               <p className="text-sm text-muted-foreground">
-                {/* Display as $0.00 format */}
-                Total Transaction: &#36;{
-                balance
+                Balance: &#36;{
+                acc.balance
                 .toLocaleString('en-US',
                  { minimumFractionDigits: 2,
                  maximumFractionDigits: 2 })
@@ -232,7 +243,7 @@ new Intl.NumberFormat('en-NG', {
       </Card>
 
       {/* Table */}
-      {txLoading ? (
+      {isInitialLoading ? (
         <Skeleton className="h-80" />
       ) : (
         <Card>
@@ -249,6 +260,17 @@ new Intl.NumberFormat('en-NG', {
                 accountNumberById={accountNumberById}
                 userName={user?.name}
               />
+            </div>
+            <div className="flex items-center justify-between px-3 pb-3 pt-4 text-sm text-muted-foreground sm:px-0">
+              <p>Loaded {transactions.length} transaction(s)</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void loadTransactions()}
+                disabled={!nextCursor || txFetching}
+              >
+                {txFetching ? "Loading..." : nextCursor ? "Load more" : "No more transactions"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -272,6 +294,8 @@ new Intl.NumberFormat('en-NG', {
                 title: "Transaction created",
                 description: "Ledger updated successfully",
               });
+              setIsInitialLoading(true);
+              await loadTransactions({ reset: true });
               setDialogOpen(false);
             } catch (error: any) {
               const message =
@@ -304,6 +328,8 @@ new Intl.NumberFormat('en-NG', {
                 title: "External Transfer created",
                 description: "Transfer completed successfully",
               });
+              setIsInitialLoading(true);
+              await loadTransactions({ reset: true });
               setExternalDialogOpen(false);
             } catch (error: any) {
               const message =

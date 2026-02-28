@@ -35,8 +35,8 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { BadgeCheck, BriefcaseBusiness, HandCoins, Landmark, ShieldCheck } from "lucide-react"
 // import { useAppSelector } from "@/store/hooks"
-import Image from "next/image"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -59,49 +59,95 @@ const itemVariants = {
 }
 
 export function AboutSection() {
+  const highlights = [
+    {
+      icon: Landmark,
+      title: "Digital Banking",
+      description:
+        "Open accounts in minutes, manage cards, and move money securely from a single dashboard.",
+    },
+    {
+      icon: HandCoins,
+      title: "Lending and Credit",
+      description:
+        "Flexible personal and business lending designed around clear terms and predictable repayment plans.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Security and Fraud Defense",
+      description:
+        "Multi-layer account protection with encryption, anomaly monitoring, and real-time transaction alerts.",
+    },
+    {
+      icon: BriefcaseBusiness,
+      title: "Business Banking",
+      description:
+        "Treasury-ready tools for SMEs and growing teams, including payment controls and transaction visibility.",
+    },
+  ]
 
   return (
-    <motion.article variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
+    <motion.article 
+    variants={containerVariants} 
+    initial="hidden" 
+    animate="visible" 
+    className="space-y-8 m-8 px-8"
+    >
       {/* Header */}
       <motion.header variants={itemVariants}>
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">About me</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">About Patheon Bank</h2>
       </motion.header>
 
       {/* About Text */}
       <motion.section variants={itemVariants} className="space-y-4 text-muted-foreground">
         <p className="leading-relaxed">
-          I'm Creative Director and UI/UX Designer from Sydney, Australia, working in web development and print media. I
-          enjoy turning complex problems into simple, beautiful and intuitive designs.
+          Patheon Bank is a modern financial institution focused on secure, transparent, and accessible banking for
+          individuals, families, and businesses. We combine proven banking discipline with digital-first tools that make
+          everyday money management simpler.
         </p>
         <p className="leading-relaxed">
-          My job is to build your website so that it is functional and user-friendly but at the same time attractive.
-          Moreover, I add personal touch to your product and make sure that is eye-catching and easy to use. My aim is
-          to bring across your message and identity in the most creative way.
+          Our mission is to help customers build confidence in every financial decision through reliable service, strong
+          risk controls, and products designed around real customer needs. From savings goals to business operations,
+          Patheon Bank is built to support long-term financial growth.
         </p>
       </motion.section>
 
       {/* Services */}
       <motion.section variants={itemVariants} className="space-y-6">
-        <h3 className="text-2xl font-bold text-foreground">What i'm doing</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          </div>
+        <h3 className="text-2xl font-bold text-foreground">What We Offer</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {highlights.map((item) => (
+            <div key={item.title} className="rounded-lg border border-border bg-card p-5">
+              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                <item.icon className="h-5 w-5" />
+              </div>
+              <h4 className="text-lg font-semibold text-foreground mb-2">{item.title}</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+            </div>
+          ))}
+        </div>
       </motion.section>
 
-      {/* Clients */}
+      {/* Principles */}
       <motion.section variants={itemVariants} className="space-y-6">
-        <h3 className="text-2xl font-bold text-foreground">Clients</h3>
-        <div className="flex flex-wrap gap-6 justify-center md:justify-start">
-          {Array(6)
-            .fill(0)
-            .map((_, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ scale: 1.05 }}
-                className="w-32 h-20 bg-card rounded-lg border border-border flex items-center justify-center"
-              >
-                <div className="text-center text-muted-foreground text-sm">Client {idx + 1}</div>
-              </motion.div>
-            ))}
+        <h3 className="text-2xl font-bold text-foreground">Our Principles</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { icon: BadgeCheck, label: "Customer-first service standards" },
+            { icon: Landmark, label: "Responsible and compliant banking" },
+            { icon: ShieldCheck, label: "Continuous investment in security" },
+          ].map((principle) => (
+            <motion.div
+              key={principle.label}
+              whileHover={{ scale: 1.02 }}
+              className="rounded-lg border border-border bg-card px-4 py-5 text-sm text-muted-foreground"
+            >
+              <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <principle.icon className="h-4 w-4" />
+              </div>
+              <p>{principle.label}</p>
+            </motion.div>
+          ))}
         </div>
       </motion.section>
     </motion.article>

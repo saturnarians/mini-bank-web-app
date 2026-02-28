@@ -100,7 +100,7 @@ if (pathname === '/login') {
   /** ---------- Desktop Navbar ---------- */
   const desktopNavbar = (
     <motion.div
-      className="hidden md:flex items-center justify-between px-8 pb-4 w-full fixed top-0 left-0 z-50 "
+      className="hidden md:flex items-center justify-between px-18 pb-4 w-full fixed top-0 left-0 z-50 "
       initial={{ y: 0, opacity: 1 }}
       animate={{
         y: scrollDir === "down" ? "-100%" : "0%",
@@ -117,7 +117,7 @@ if (pathname === '/login') {
       </div>
 
       <motion.ul
-        className="glass hidden md:flex justify-center items-center px-2 mt-4 border border-border rounded-full h-13"
+        className="glass hidden md:flex relative left-12 px-2 mt-4 border border-border rounded-full h-13"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
