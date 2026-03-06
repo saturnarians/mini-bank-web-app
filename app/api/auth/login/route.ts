@@ -10,7 +10,17 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = loginSchema.parse(await request.json());
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or empty request body' },
+        { status: 400 }
+      );
+    }
+
+    const body = loginSchema.parse(payload);
     const { user, token, expiresIn } = await authController.login(body);
 
     if (!user.emailVerified) {
@@ -33,7 +43,17 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    const response = NextResponse.json(user, { status: 200 });
+    const isSuspended = (user.status ?? "").toLowerCase() === "suspended";
+    const response = NextResponse.json(
+      {
+        ...user,
+        isSuspended,
+        ...(isSuspended
+          ? { message: "User suspended. Contact customer care." }
+          : {}),
+      },
+      { status: 200 }
+    );
     setTokenCookie(response, token, expiresIn);
 
     return response;

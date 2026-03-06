@@ -1,6 +1,6 @@
 'use client';
 
-import { TransactionFormData } from '@/lib/schemas';
+import { CreateTransactionFormData } from '@/lib/schemas';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ interface TransactionDialogProps {
   accountId: string; // Provided by parent, do NOT include in form submission
   isLoading?: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {data:TransactionFormData, accountId: string}) => void;
+  onSubmit: (data: {data:CreateTransactionFormData, accountId: string}) => void;
 }
 
 export function TransactionDialog({

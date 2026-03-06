@@ -25,8 +25,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalTransferDialog }from '@/components/user/transactions/external-transfer-dialog';
 import type { Transaction } from "@/lib/types";
+import { Input } from "@/components/ui/input";
+import { jsPDF } from "jspdf";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function TransactionsPage() {
+  const normalizeStatus = (status?: string | null) =>
+    (status ?? "").trim().toLowerCase();
+
   // --- UI STATE (Redux) ---
   const { filters, sortBy, sortOrder } = useAppSelector((state) => state.transactionsUi);
   const { user } = useAppSelector((state) => state.auth);
@@ -40,12 +54,21 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [pinSetupOpen, setPinSetupOpen] = useState(false);
+  const [newTransactionPin, setNewTransactionPin] = useState("");
+  const [confirmTransactionPin, setConfirmTransactionPin] = useState("");
+  const [isSettingPin, setIsSettingPin] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   
   const { toast } = useToast();
 
   // --- API ---
   const { data: accounts = [], isLoading: accountsLoading } =
-    useGetAccountsQuery({});
+    useGetAccountsQuery(
+      {},
+      { refetchOnMountOrArgChange: true, refetchOnFocus: true, refetchOnReconnect: true }
+    );
 
   const [fetchTransactions, { isFetching: txFetching, error: txError }] =
     useLazyGetTransactionsQuery();
@@ -82,7 +105,9 @@ export default function TransactionsPage() {
   // Default account
   useEffect(() => {
     if (!selectedAccountId && accounts.length > 0) {
-      const firstActive = accounts.find((acc) => acc.status === "active");
+      const firstActive = accounts.find(
+        (acc) => normalizeStatus(acc.status) === "active",
+      );
       setSelectedAccountId(firstActive?.id ?? accounts[0].id);
     }
   }, [accounts, selectedAccountId]);
@@ -120,8 +145,10 @@ export default function TransactionsPage() {
   }, [transactions, filters, sortBy, sortOrder]);
 
   const selectedAccount = accounts.find((acc) => acc.id === selectedAccountId) ?? null;
+  const isUserSuspended = normalizeStatus(user?.status) === "suspended";
   const isSelectedSuspended =
-    selectedAccount?.status?.toLowerCase() === "suspended";
+    normalizeStatus(selectedAccount?.status) === "suspended";
+  const isTransactionBlocked = isUserSuspended || isSelectedSuspended;
 
   const accountNumberById = useMemo(
     () =>
@@ -132,6 +159,127 @@ export default function TransactionsPage() {
   );
 
   if (accountsLoading) return <Skeleton className="h-40" />;
+
+  const handleSetTransactionPin = async () => {
+    if (!/^\d{4}$/.test(newTransactionPin)) {
+      toast({
+        title: "Invalid PIN",
+        description: "Transaction PIN must be exactly 4 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newTransactionPin !== confirmTransactionPin) {
+      toast({
+        title: "PIN mismatch",
+        description: "New PIN and confirmation do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSettingPin(true);
+    try {
+      const response = await fetch("/api/auth/transaction-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          newPin: newTransactionPin,
+          confirmNewPin: confirmTransactionPin,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.message || result?.error || "Failed to set transaction PIN.");
+      }
+
+      toast({
+        title: "PIN saved",
+        description: "Your transaction PIN has been created successfully.",
+      });
+      setPinSetupOpen(false);
+      setNewTransactionPin("");
+      setConfirmTransactionPin("");
+    } catch (error: any) {
+      toast({
+        title: "PIN setup failed",
+        description: error?.message || "Could not create transaction PIN.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingPin(false);
+    }
+  };
+
+  const handleDownloadReceiptPdf = () => {
+    if (!receiptTransaction) return;
+
+    const doc = new jsPDF();
+    const amount = Number(receiptTransaction?.amount || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const dateText = receiptTransaction?.timestamp
+      ? new Date(receiptTransaction.timestamp).toLocaleString()
+      : new Date().toLocaleString();
+
+    doc.setFontSize(18);
+    doc.text("Mini Bank - Transaction Receipt", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Reference: ${receiptTransaction?.reference || "N/A"}`, 14, 35);
+    doc.text(`Type: ${receiptTransaction?.type || "N/A"}`, 14, 45);
+    doc.text(`Amount: $${amount}`, 14, 55);
+    doc.text(`Status: ${receiptTransaction?.status || "completed"}`, 14, 65);
+    doc.text(`Date: ${dateText}`, 14, 75);
+    doc.text(`Description: ${receiptTransaction?.description || "N/A"}`, 14, 85);
+
+    const fileRef = receiptTransaction?.reference || `receipt-${Date.now()}`;
+    doc.save(`${fileRef}.pdf`);
+  };
+
+  const handlePrintReceipt = () => {
+    if (!receiptTransaction) return;
+
+    const amount = Number(receiptTransaction?.amount || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const dateText = receiptTransaction?.timestamp
+      ? new Date(receiptTransaction.timestamp).toLocaleString()
+      : new Date().toLocaleString();
+
+    const popup = window.open("", "_blank", "width=700,height=900");
+    if (!popup) return;
+
+    popup.document.write(`
+      <html>
+        <head>
+          <title>Transaction Receipt</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+            h1 { font-size: 20px; margin-bottom: 16px; }
+            p { margin: 8px 0; font-size: 14px; }
+            .label { font-weight: 700; }
+          </style>
+        </head>
+        <body>
+          <h1>Mini Bank - Transaction Receipt</h1>
+          <p><span class="label">Reference:</span> ${receiptTransaction?.reference || "N/A"}</p>
+          <p><span class="label">Type:</span> ${receiptTransaction?.type || "N/A"}</p>
+          <p><span class="label">Amount:</span> $${amount}</p>
+          <p><span class="label">Status:</span> ${receiptTransaction?.status || "completed"}</p>
+          <p><span class="label">Date:</span> ${dateText}</p>
+          <p><span class="label">Description:</span> ${receiptTransaction?.description || "N/A"}</p>
+        </body>
+      </html>
+    `);
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  };
 
   return (
     <div 
@@ -154,7 +302,7 @@ export default function TransactionsPage() {
             <Button
               // size="lg"
               className="flex-1 gap-2 "
-              disabled={isSelectedSuspended}
+              disabled={isTransactionBlocked}
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -165,7 +313,7 @@ export default function TransactionsPage() {
               // size="lg"
               // variant="ghost"
               className="flex-1 gap-2"
-              disabled={isSelectedSuspended}
+              disabled={isTransactionBlocked}
               onClick={() => setExternalDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -175,11 +323,20 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {isSelectedSuspended && (
-        <Alert variant="destructive">
+      {isUserSuspended && (
+        <Alert variant="destructive" className="border-red-600 bg-red-50 dark:bg-red-950/30">
           <AlertCircle className="h-4 w-4 flex-1" />
-          <AlertDescription>
-            This account is suspended and cannot make transactions. talk to the customer care for help.
+          <AlertDescription className="font-bold text-red-700 dark:text-red-300">
+            USER ACCOUNT SUSPENDED: This user cannot make any transaction. Contact support to reactivate it.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isUserSuspended && isSelectedSuspended && (
+        <Alert variant="destructive" className="border-red-600 bg-red-50 dark:bg-red-950/30">
+          <AlertCircle className="h-4 w-4 flex-1" />
+          <AlertDescription className="font-bold text-red-700 dark:text-red-300">
+            ACCOUNT SUSPENDED: This account cannot make any transaction. Contact support to reactivate it.
           </AlertDescription>
         </Alert>
       )}
@@ -198,12 +355,20 @@ new Intl.NumberFormat('en-NG', {
         return (
           <div
             key={acc.id}
-            className="flex flex-col items-start justify-between gap-3 rounded border p-4 sm:flex-row sm:items-center"
+            onClick={() => setSelectedAccountId(acc.id)}
+            className={`flex cursor-pointer flex-col items-start justify-between gap-3 rounded border p-4 sm:flex-row sm:items-center ${
+              selectedAccountId === acc.id ? "border-primary bg-primary/5" : ""
+            }`}
           >
             <div className="min-w-0">
               <p className="font-semibold wrap-break-word">
                 {acc.accountType} — ****{acc.accountNumber.slice(-4)}
               </p>
+              {normalizeStatus(acc.status) === "suspended" ? (
+                <p className="text-sm font-bold uppercase tracking-wide text-red-600">
+                  Suspended
+                </p>
+              ) : null}
               <p className="text-sm text-muted-foreground">
                 Balance: &#36;{
                 acc.balance
@@ -213,6 +378,16 @@ new Intl.NumberFormat('en-NG', {
                  }
               </p>
             </div>
+            <Button
+              variant={selectedAccountId === acc.id ? "default" : "outline"}
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                setSelectedAccountId(acc.id);
+              }}
+            >
+              {selectedAccountId === acc.id ? "Selected" : "View Activity"}
+            </Button>
 
             {/* <Button
             variant="outline"
@@ -285,10 +460,14 @@ new Intl.NumberFormat('en-NG', {
           onOpenChange={setDialogOpen}
           onSubmit={async ({ data, accountId }) => {
             try {
-              await createTransaction({
+              const created = await createTransaction({
                 ...data,
                 accountId,
               }).unwrap();
+
+              const tx = (created as any)?.senderTx ?? created;
+              setReceiptTransaction(tx);
+              setReceiptOpen(true);
 
               toast({
                 title: "Transaction created",
@@ -298,6 +477,16 @@ new Intl.NumberFormat('en-NG', {
               await loadTransactions({ reset: true });
               setDialogOpen(false);
             } catch (error: any) {
+              if (error?.data?.error === "TRANSACTION_PIN_NOT_SET") {
+                setPinSetupOpen(true);
+                toast({
+                  title: "Create transaction PIN",
+                  description:
+                    error?.data?.message || "Set your transaction PIN before sending money.",
+                });
+                return;
+              }
+
               const message =
                 error?.data?.message ||
                 error?.data?.error ||
@@ -319,10 +508,14 @@ new Intl.NumberFormat('en-NG', {
           onOpenChange={setExternalDialogOpen}
           onSubmit={async ({ data, accountId }) => {
             try {
-              await createExternalTransfer({
+              const created = await createExternalTransfer({
                 ...data,
                 accountId: accountId,
               }).unwrap();
+
+              const tx = (created as any)?.transfer ?? created;
+              setReceiptTransaction(tx);
+              setReceiptOpen(true);
 
               toast({
                 title: "External Transfer created",
@@ -332,6 +525,16 @@ new Intl.NumberFormat('en-NG', {
               await loadTransactions({ reset: true });
               setExternalDialogOpen(false);
             } catch (error: any) {
+              if (error?.data?.error === "TRANSACTION_PIN_NOT_SET") {
+                setPinSetupOpen(true);
+                toast({
+                  title: "Create transaction PIN",
+                  description:
+                    error?.data?.message || "Set your transaction PIN before sending money.",
+                });
+                return;
+              }
+
               const message =
                 error?.data?.message ||
                 error?.data?.error ||
@@ -345,7 +548,87 @@ new Intl.NumberFormat('en-NG', {
           }}
         />
       )}
+
+      <Dialog open={pinSetupOpen} onOpenChange={setPinSetupOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Transaction PIN</DialogTitle>
+            <DialogDescription>
+              You need a transaction PIN before you can send money.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-transaction-pin">New PIN</Label>
+              <Input
+                id="new-transaction-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="4-digit PIN"
+                value={newTransactionPin}
+                onChange={(event) => setNewTransactionPin(event.target.value.replace(/\D/g, ""))}
+                disabled={isSettingPin}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-transaction-pin">Confirm PIN</Label>
+              <Input
+                id="confirm-transaction-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="Repeat PIN"
+                value={confirmTransactionPin}
+                onChange={(event) => setConfirmTransactionPin(event.target.value.replace(/\D/g, ""))}
+                disabled={isSettingPin}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPinSetupOpen(false)}
+              disabled={isSettingPin}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSetTransactionPin} disabled={isSettingPin}>
+              {isSettingPin ? "Saving..." : "Save PIN"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Transaction Receipt</DialogTitle>
+            <DialogDescription>Transaction completed successfully.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p><strong>Reference:</strong> {receiptTransaction?.reference || "N/A"}</p>
+            <p><strong>Type:</strong> {receiptTransaction?.type || "N/A"}</p>
+            <p><strong>Amount:</strong> ${Number(receiptTransaction?.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p><strong>Status:</strong> {receiptTransaction?.status || "completed"}</p>
+            <p><strong>Date:</strong> {receiptTransaction?.timestamp ? new Date(receiptTransaction.timestamp).toLocaleString() : new Date().toLocaleString()}</p>
+            {receiptTransaction?.description ? (
+              <p><strong>Description:</strong> {receiptTransaction.description}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handlePrintReceipt}>
+              Print
+            </Button>
+            <Button variant="outline" onClick={handleDownloadReceiptPdf}>
+              Download PDF
+            </Button>
+            <Button onClick={() => setReceiptOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

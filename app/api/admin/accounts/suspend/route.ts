@@ -18,12 +18,30 @@ type Context = {
 export const POST = authorize(["admin", "superadmin"], async (req: NextRequest, context: Context) => {
   try {
     const { session } = context;
+    console.log("[API][admin/accounts/suspend] request received", {
+      adminId: session.id,
+      adminEmail: session.email,
+    });
+
+    let previewAccountId: string | undefined;
+    try {
+      const cloned = req.clone();
+      const body = await cloned.json();
+      previewAccountId = body?.accountId;
+      console.log("[API][admin/accounts/suspend] payload preview", {
+        accountId: previewAccountId,
+      });
+    } catch {
+      console.log("[API][admin/accounts/suspend] payload preview unavailable");
+    }
+
     return await adminAccountController.suspendAccount(req, {
       id: session.id,
       email: session.email,
       name: session.name,
     });
   } catch (err) {
+    console.error("[API][admin/accounts/suspend] failed", err);
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: err.errors?.[0]?.message || "Invalid input" },

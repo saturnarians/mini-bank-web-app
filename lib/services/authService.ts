@@ -10,6 +10,12 @@ function generateAccountNumber() {
   return `AC${Math.floor(1000000000 + Math.random() * 9000000000)}`;
 }
 
+function normalizeUserStatus(status?: string | null): "active" | "suspended" {
+  return (status ?? "").trim().toLowerCase() === "suspended"
+    ? "suspended"
+    : "active";
+}
+
 
 export const authService = {
 
@@ -17,6 +23,7 @@ async register(data: {
     email: string;
     name: string;
     password: string;
+    transactionPin?: string;
     accountType?: "checking" | "savings" | "investment"; // 1. Added optional type here
   }): Promise<User> {
     
@@ -31,6 +38,9 @@ async register(data: {
 
     // 2. Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedTransactionPin = data.transactionPin
+      ? await bcrypt.hash(data.transactionPin, 10)
+      : null;
 
     // 3. Database Transaction: User + Account + Bonus
     const result = await prisma.$transaction(async (tx) => {
@@ -41,6 +51,8 @@ async register(data: {
           email: data.email,
           name: data.name,
           password: hashedPassword,
+          transactionPinHash: hashedTransactionPin,
+          transactionPinSetAt: hashedTransactionPin ? new Date() : null,
           role: 'user', 
           emailVerified: false,
         },
@@ -111,8 +123,10 @@ async register(data: {
     email: user.email,
     name: user.name,
     role: user.role as UserRole,
+    status: normalizeUserStatus(user.status),
     createdAt: user.createdAt.toISOString(),
     emailVerified: user.emailVerified,
+    hasTransactionPin: !!user.transactionPinHash,
     accounts: [
       {
         id: account.id,
@@ -143,8 +157,10 @@ async register(data: {
       email: user.email,
       name: user.name,
       role: user.role as UserRole,
+      status: normalizeUserStatus(user.status),
       createdAt: user.createdAt.toISOString(),
       emailVerified: user.emailVerified,
+      hasTransactionPin: !!user.transactionPinHash,
     };
   },
 };

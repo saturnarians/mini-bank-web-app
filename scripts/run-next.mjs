@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 
+
+process.env.NODE_OPTIONS = '--max-old-space-size=4096';
+
 const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error('Usage: node scripts/run-next.mjs <next-args>');

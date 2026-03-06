@@ -23,7 +23,11 @@ export const profileController = {
   async get(userId: string) {
     const user = await profileService.getProfile(userId);
     if (!user) throw new Error("USER_NOT_FOUND");
-    return user;
+    const { transactionPinHash, ...safeUser } = user as any;
+    return {
+      ...safeUser,
+      hasTransactionPin: !!transactionPinHash,
+    };
   },
 
   async update(userId: string, body: any) {
@@ -36,7 +40,12 @@ export const profileController = {
           ? null
           : undefined,
     };
-    return profileService.updateProfile(userId, normalized);
+    const updated = await profileService.updateProfile(userId, normalized);
+    const { transactionPinHash, ...safeUser } = updated as any;
+    return {
+      ...safeUser,
+      hasTransactionPin: !!transactionPinHash,
+    };
   },
 
   async changePassword(userId: string, body: any) {

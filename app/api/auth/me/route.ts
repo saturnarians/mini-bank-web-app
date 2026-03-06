@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { authorize } from '@/lib/auth/guard';
 import prisma from '@/lib/prisma';
-import { getSessionFromCookies } from '@/lib/auth';
 
 // 1. Wrap with authorize to handle session check automatically
 // 2. We allow any logged-in role ('user', 'admin', etc.)
@@ -24,6 +23,7 @@ export const GET = authorize(['user', 'admin', 'superadmin'],
       email: true,
       name: true,
       role: true,
+      status: true,
       phone: true,
       address: true,
       profilePhotoUrl: true,
@@ -31,6 +31,7 @@ export const GET = authorize(['user', 'admin', 'superadmin'],
       kycStatus: true,
       kycUpdatedAt: true,
       emailVerified: true,
+      transactionPinHash: true,
       createdAt: true,
     },
   });
@@ -39,6 +40,11 @@ export const GET = authorize(['user', 'admin', 'superadmin'],
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
+  const { transactionPinHash, ...safeUser } = user;
+
   // Return flat user object (client expects flat user)
-  return NextResponse.json(user);
+  return NextResponse.json({
+    ...safeUser,
+    hasTransactionPin: !!transactionPinHash,
+  });
 });

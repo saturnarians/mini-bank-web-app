@@ -40,6 +40,7 @@ export function UserForm({ user, isLoading, onSubmit, onCancel }: UserFormProps)
       phone: user?.phone || '',
       address: user?.address || '',
       role: user?.role || 'user',
+      status: (user?.status === 'suspended' ? 'suspended' : 'active'),
     },
   });
 
@@ -138,6 +139,29 @@ export function UserForm({ user, isLoading, onSubmit, onCancel }: UserFormProps)
                 </SelectContent>
               </Select>
               <FormDescription>User access level</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>User suspension status</FormDescription>
               <FormMessage />
             </FormItem>
           )}

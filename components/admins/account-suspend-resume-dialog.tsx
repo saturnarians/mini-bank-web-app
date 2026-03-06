@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,15 @@ export function AccountSuspendResumeDialog({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+      setError(null);
+      setSuccess(false);
+      setLoading(false);
+    }
+  }, [isOpen, account?.id, action]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!account) return;
@@ -45,23 +54,33 @@ export function AccountSuspendResumeDialog({
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           accountId: account.id,
           reason,
         }),
       });
 
+      const raw = await response.text();
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to ${action} account`);
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            `Failed to ${action} account (HTTP ${response.status}). ${raw.slice(0, 120)}`
+        );
       }
 
       setSuccess(true);
       setReason('');
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess?.();
-      }, 2000);
+      onOpenChange(false);
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -125,7 +144,7 @@ export function AccountSuspendResumeDialog({
             <div className="flex gap-2">
               <Button
                 type="submit"
-                disabled={loading || reason.length < 5 || success}
+                disabled={loading || reason.length < 5}
                 className={action === 'suspend' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
               >
                 {loading ? 'Processing...' : action === 'suspend' ? 'Suspend Account' : 'Resume Account'}

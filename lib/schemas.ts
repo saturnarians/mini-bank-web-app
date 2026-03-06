@@ -12,6 +12,11 @@ export const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
+  transactionPin: z
+    .string()
+    .regex(/^\d{4}$/, "Transaction PIN must be 4 digits")
+    .optional()
+    .or(z.literal("")),
   accountType: accountTypeEnum.optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -98,6 +103,7 @@ export const userSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   role: z.enum(['superadmin', 'admin', 'user']),
+  status: z.enum(['active', 'suspended']).optional(),
 });
 
 // -------------------- Admin Transaction Approval --------------------
@@ -111,9 +117,7 @@ export const rejectTransactionSchema = z.object({
   rejectionReason: z.string().min(5, "Rejection reason must be at least 5 characters"),
 });
 
-export const externalTransferSchema = z.object({
-  accountId: z.string().min(1, "Account is required"),
-
+export const externalTransferFormSchema = z.object({
   amount: z
     .number({
       required_error: 'Amount is required',
@@ -164,6 +168,23 @@ export const externalTransferSchema = z.object({
   pin: z.string().regex(/^\d{4}$/, 'Transaction PIN must be 4 digits'),
 });
 
+export const externalTransferSchema = externalTransferFormSchema.extend({
+  accountId: z.string().min(1, "Account is required"),
+});
+
+export const setTransactionPinSchema = z.object({
+  currentPin: z
+    .string()
+    .regex(/^\d{4}$/, 'Current PIN must be 4 digits')
+    .optional()
+    .or(z.literal('')),
+  newPin: z.string().regex(/^\d{4}$/, 'New PIN must be 4 digits'),
+  confirmNewPin: z.string(),
+}).refine((data) => data.newPin === data.confirmNewPin, {
+  message: "PINs do not match",
+  path: ["confirmNewPin"],
+});
+
 // -------------------- Export TypeScript types --------------------
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
@@ -176,8 +197,11 @@ export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type UserFormData = z.infer<typeof userSchema>;
 export type AdminAdjustBalanceFormData = z.infer<typeof adminAdjustBalanceSchema>;
 export type createTransactionFormData = z.infer<typeof createTransactionSchema>;
+export type CreateTransactionFormData = z.infer<typeof createTransactionSchema>;
 export type updateProfileFormData = z.infer<typeof updateProfileSchema>;
 export type ApproveTransactionFormData = z.infer<typeof approveTransactionSchema>;
 export type RejectTransactionFormData = z.infer<typeof rejectTransactionSchema>;
-export type ExternalTransferFormData = z.infer<typeof externalTransferSchema>
+export type ExternalTransferFormData = z.infer<typeof externalTransferFormSchema>
+export type ExternalTransferRequestData = z.infer<typeof externalTransferSchema>
+export type SetTransactionPinFormData = z.infer<typeof setTransactionPinSchema>
 

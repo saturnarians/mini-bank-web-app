@@ -71,6 +71,7 @@ export function AddTransactionHistoryDialog({
       const response = await fetch('/api/admin/transactions/add-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           accountId: account.id,
           type,
@@ -82,9 +83,20 @@ export function AddTransactionHistoryDialog({
         }),
       });
 
+      const raw = await response.text();
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to add transaction history');
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            `Failed to add transaction history (HTTP ${response.status}). ${raw.slice(0, 120)}`
+        );
       }
 
       setSuccess(true);
@@ -97,10 +109,8 @@ export function AddTransactionHistoryDialog({
       setReason('');
       setType('deposit');
 
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess?.();
-      }, 2000);
+      onOpenChange(false);
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

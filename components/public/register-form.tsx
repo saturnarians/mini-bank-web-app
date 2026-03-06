@@ -33,6 +33,7 @@ export default function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      transactionPin: "",
     },
   });
 
@@ -43,6 +44,7 @@ export default function RegisterForm() {
         name: values.name,
         email: values.email,
         password: values.password,
+        transactionPin: values.transactionPin || undefined,
         accountType: values.accountType,
       })).unwrap();
       if (result?.requiresVerification) {
@@ -103,6 +105,26 @@ export default function RegisterForm() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="transactionPin"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Transaction PIN (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="4-digit PIN"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

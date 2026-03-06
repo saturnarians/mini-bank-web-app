@@ -31,13 +31,17 @@ import { skipToken } from "@reduxjs/toolkit/query/react";
 export default function DashboardPage() {
   // RTK Query hooks
   const { data: accounts = [], isLoading: accountsLoading } =
-    useGetAccountsQuery({ status: "active" });
+    useGetAccountsQuery(
+      {},
+      { refetchOnMountOrArgChange: true, refetchOnFocus: true, refetchOnReconnect: true }
+    );
 
   const selectedAccountId = accounts[0]?.id;
 
   const { data: transactionsData, isLoading: transactionsLoading } =
     useGetTransactionsQuery(
       selectedAccountId ? { accountId: selectedAccountId } : skipToken,
+      { refetchOnMountOrArgChange: true, refetchOnFocus: true, refetchOnReconnect: true }
     );
 
   const transactions = transactionsData?.transactions || [];
@@ -45,6 +49,9 @@ export default function DashboardPage() {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   const activeAccounts = accounts.filter(
     (acc) => acc.status === "active",
+  ).length;
+  const suspendedAccounts = accounts.filter(
+    (acc) => acc.status === "suspended",
   ).length;
 
   const recentTransactions = transactions
@@ -123,8 +130,14 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">Active</p>
-            <p className="text-xs mt-1">All systems operational</p>
+            <p className={`text-2xl font-bold ${suspendedAccounts > 0 ? "text-red-600" : "text-green-600"}`}>
+              {suspendedAccounts > 0 ? "Suspended" : "Active"}
+            </p>
+            <p className="text-xs mt-1">
+              {suspendedAccounts > 0
+                ? `${suspendedAccounts} suspended account(s)`
+                : "All systems operational"}
+            </p>
           </CardContent>
         </Card>
       </div>

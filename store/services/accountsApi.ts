@@ -90,7 +90,7 @@ export const accountApi = createApi({
     suspendAccount: builder.mutation<Account, { id: string; reason: string }>({
       query: ({id, reason}) => ({
         url: `/accounts/${id}/suspend`,
-        method: "PATCH",
+        method: "POST",
         body:{reason},
       }),
       async onQueryStarted({id}, { dispatch, queryFulfilled }) {
@@ -127,7 +127,7 @@ export const accountApi = createApi({
     resumeAccount: builder.mutation<Account, { id: string; reason: string }>({
       query: ({id, reason}) => ({
         url: `/accounts/${id}/resume`,
-        method: "PATCH",
+        method: "POST",
         body:{reason},
       }),
       async onQueryStarted({id}, { dispatch, queryFulfilled }) {

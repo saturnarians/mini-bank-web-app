@@ -27,6 +27,7 @@ export const authController = {
         email: data.email,
         name: data.name,
         password: data.password,
+        transactionPin: data.transactionPin || undefined,
         // Convert 'checking' -> 'CHECKING' for Prisma Enum consistency
         accountType: data.accountType || "checking",
       };

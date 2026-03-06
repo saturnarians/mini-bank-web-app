@@ -16,6 +16,7 @@ export const profileService = {
         kycStatus: true,
         kycUpdatedAt: true,
         emailVerified: true,
+        transactionPinHash: true,
         createdAt: true,
       },
     });
@@ -37,6 +38,7 @@ export const profileService = {
         kycStatus: true,
         kycUpdatedAt: true,
         emailVerified: true,
+        transactionPinHash: true,
         createdAt: true,
       },
     });

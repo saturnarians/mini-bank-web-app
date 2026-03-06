@@ -27,7 +27,10 @@ export async function POST(req: Request) {
       pin,
     } = body;
 
-    assertTransactionPin(pin);
+    await assertTransactionPin({
+      userId: session.id,
+      pin,
+    });
 
     const transfer = await transactionService.createExternalTransfer({
       userId: session.id,
@@ -62,6 +65,11 @@ export async function POST(req: Request) {
           { error: error.message, message: "Account is suspended and cannot make transactions." },
           { status: 403 }
         );
+      case "USER_SUSPENDED":
+        return NextResponse.json(
+          { error: error.message, message: "User account is suspended and cannot make transactions." },
+          { status: 403 }
+        );
       case "INSUFFICIENT_FUNDS":
         return NextResponse.json(
           { error: error.message, message: "Insufficient funds." },
@@ -71,6 +79,19 @@ export async function POST(req: Request) {
         return NextResponse.json(
           { error: error.message, message: "Invalid transaction PIN." },
           { status: 403 }
+        );
+      case "TRANSACTION_PIN_NOT_SET":
+        return NextResponse.json(
+          {
+            error: error.message,
+            message: "Transaction PIN not set. Create your PIN to continue.",
+          },
+          { status: 428 }
+        );
+      case "USER_NOT_FOUND":
+        return NextResponse.json(
+          { error: error.message, message: "User not found." },
+          { status: 404 }
         );
       default:
         console.error("Transfer Error:", error);

@@ -9,7 +9,7 @@ import { ProfileForm } from '@/components/user/profile/profile-form';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, MapPin, Calendar, Shield } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Shield } from 'lucide-react';
 
 export default function ProfilePageClient() {
   const { user } = useAppSelector(state => state.auth);
@@ -98,7 +98,7 @@ export default function ProfilePageClient() {
               </p>
               <p className="font-mono text-sm">{user.id}</p>
             </div>
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Member Since
@@ -110,7 +110,7 @@ export default function ProfilePageClient() {
                   day: 'numeric',
                 })}
               </p>
-            </div>
+            </div> */}
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Shield className="h-4 w-4" />

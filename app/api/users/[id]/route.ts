@@ -5,10 +5,16 @@ import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+async function getRouteId(params: { id: string } | Promise<{ id: string }>) {
+  const resolved = await params;
+  return resolved.id;
+}
+
 // GET: Single User
 export const GET = authorize(['admin', 'superadmin'], async (req, { params }) => {
+  const id = await getRouteId(params);
   const user = await prisma.user.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { accounts: true }
   });
   
@@ -18,6 +24,7 @@ export const GET = authorize(['admin', 'superadmin'], async (req, { params }) =>
 
 // PUT: Update User
 export const PUT = authorize(['admin', 'superadmin'], async (req, { session, params }) => {
+  const id = await getRouteId(params);
   const body = await req.json();
   
   // Security: Only superadmins can promote others to admin
@@ -26,19 +33,37 @@ export const PUT = authorize(['admin', 'superadmin'], async (req, { session, par
   }
 
   const updated = await prisma.user.update({
-    where: { id: params.id },
-    data: body
+    where: { id },
+    data: body,
   });
+
+  const normalizedStatus = (body?.status ?? "").toString().trim().toLowerCase();
+
+  // Keep account-level status consistent when admin suspends/resumes a user.
+  // Done as sequential writes to avoid Mongo transient transaction failures.
+  if (normalizedStatus === "suspended") {
+    await prisma.account.updateMany({
+      where: { userId: id },
+      data: { status: "suspended" },
+    });
+  } else if (normalizedStatus === "active") {
+    await prisma.account.updateMany({
+      where: { userId: id, status: "suspended" },
+      data: { status: "active" },
+    });
+  }
 
   return NextResponse.json(updated);
 });
 
 // DELETE: Delete User
 export const DELETE = authorize(['admin', 'superadmin'], async (req, { session, params }) => {
-  if (params.id === session.id) {
+  const id = await getRouteId(params);
+
+  if (id === session.id) {
     return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
   }
 
-  await prisma.user.delete({ where: { id: params.id } });
+  await prisma.user.delete({ where: { id } });
   return NextResponse.json({ success: true });
 });

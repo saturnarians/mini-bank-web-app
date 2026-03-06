@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Transaction } from "@/lib/domain/types";
+import { accountApi } from "@/store/services/accountsApi";
 
 export const adminTransactionsApi = createApi({
   reducerPath: "adminTransactionsApi",
@@ -17,9 +18,20 @@ export const adminTransactionsApi = createApi({
         body,
       }),
 
-      invalidatesTags: (r, e, a) => [
-        { type: "Account", id: a.accountId },
-      ],
+      async onQueryStarted({ accountId }, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(
+            accountApi.util.invalidateTags([
+              { type: "Account", id: accountId },
+              { type: "Account", id: "LIST" },
+              { type: "Account", id: "ADMIN_LIST" },
+            ])
+          );
+        } catch {
+          // Handled by mutation error path in callers.
+        }
+      },
     }),
   }),
 });

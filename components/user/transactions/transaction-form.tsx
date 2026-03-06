@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { transactionSchema, type TransactionFormData } from '@/lib/schemas';
+import { createTransactionSchema, type CreateTransactionFormData } from '@/lib/schemas';
 import { useGetAccountsQuery } from '@/store/services/accountsApi';
 import {
   Form,
@@ -25,7 +25,7 @@ import { Loader2 } from 'lucide-react';
 
 interface TransactionFormProps {
   isLoading?: boolean;
-  onSubmit: (data: TransactionFormData) => void;
+  onSubmit: (data: CreateTransactionFormData) => void;
   onCancel: () => void;
 }
 
@@ -36,8 +36,8 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const { data: accounts = [] } = useGetAccountsQuery({ status: 'active' });
 
-  const form = useForm<TransactionFormData>({
-    resolver: zodResolver(transactionSchema),
+  const form = useForm<CreateTransactionFormData>({
+    resolver: zodResolver(createTransactionSchema),
     defaultValues: {
       type: 'transfer', // locked for this UI
       amount: undefined,
@@ -49,8 +49,6 @@ export function TransactionForm({
 
   return (
     <Form {...form}>
-      console.log(form.errors);
-      console.log('errors', form.formState.errors);
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"

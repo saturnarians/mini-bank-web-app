@@ -41,17 +41,37 @@ export const loginUser = createAsyncThunk(
   "auth/login",
   async (data: LoginFormData, { dispatch, rejectWithValue }) => {
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
+      const loginEndpoints = ["/api/auth/login", "/api/login"];
+      let res: Response | null = null;
+      let result: any = null;
 
-      const result = await res.json();
+      for (const endpoint of loginEndpoints) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(data),
+        });
 
-      if (!res.ok) {
-        return rejectWithValue(result);
+        const contentType = response.headers.get("content-type") || "";
+        const payload = contentType.includes("application/json")
+          ? await response.json()
+          : null;
+
+        if (response.status !== 404) {
+          res = response;
+          result = payload;
+          break;
+        }
+
+        res = response;
+        result = payload;
+      }
+
+      if (!res || !res.ok) {
+        return rejectWithValue(
+          result || { error: "Login endpoint not found. Please restart server." },
+        );
       }
 
       // 🔑 identity hydration happens immediately Hydrate user from /me

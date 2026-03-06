@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Prisma, AccountStatus } from '@prisma/client';
 
 const isSuspended = (status?: string | null) =>
-  (status ?? '').toLowerCase() === 'suspended';
+  (status ?? "").trim().toLowerCase() === "suspended";
 
 type AdjustBalanceInput = {
   accountId: string;
@@ -18,7 +18,7 @@ type AdjustBalanceInput = {
 export const transactionService = {
   /**
    * List transactions for a user's account (cursor pagination)
-   * Excludes admin-created historical transaction entries from user view
+   * Includes ledger and historical/admin-inserted entries
    */
   async listByUser({
     userId,
@@ -36,9 +36,7 @@ export const transactionService = {
         account: {
           userId, // IMPORTANT: user → account → transactions
         },
-        // Exclude admin-created historical entries from user view
         ...(accountId ? { accountId } : {}),
-        isHistorical: false,
       },
 
       ...(cursor && {
@@ -81,28 +79,95 @@ export const transactionService = {
       runningBalance?: number;
     };
   }) {
+    console.log("[Service][tx.createUserTransaction] start", {
+      userId,
+      accountId,
+      type: data.type,
+      amount: data.amount,
+    });
+
+    if (!accountId) {
+      console.error("[Service][tx.createUserTransaction] missing accountId", { userId });
+      throw new Error('ACCOUNT_ID_REQUIRED');
+    }
+
     return prisma.$transaction(async  (tx: Prisma.TransactionClient) => {
+      const senderUser = await tx.user.findUnique({
+        where: { id: userId },
+        select: { status: true },
+      });
+
+      if (!senderUser) {
+        console.error("[Service][tx.createUserTransaction] sender user not found", { userId });
+        throw new Error("USER_NOT_FOUND");
+      }
+      if (isSuspended(senderUser.status)) {
+        console.error("[Service][tx.createUserTransaction] blocked user suspended", {
+          userId,
+          status: senderUser.status,
+        });
+        throw new Error("USER_SUSPENDED");
+      }
+
       // 1. verify ownership of the sender
       const sender = await tx.account.findFirst({
         where: { id: accountId, userId },
       });
 
-      if (!sender) throw new Error('ACCOUNT_NOT_FOUND');
-      if (isSuspended(sender.status)) throw new Error('ACCOUNT_SUSPENDED');
+      if (!sender) {
+        console.error("[Service][tx.createUserTransaction] sender account not found", {
+          userId,
+          accountId,
+        });
+        throw new Error('ACCOUNT_NOT_FOUND');
+      }
+      if (isSuspended(sender.status)) {
+        console.error("[Service][tx.createUserTransaction] blocked account suspended", {
+          accountId: sender.id,
+          status: sender.status,
+        });
+        throw new Error('ACCOUNT_SUSPENDED');
+      }
 
       // 2. Basic balance guard
       if ((data.type === 'withdrawal' || data.type === 'transfer') && sender.balance < data.amount) {
+        console.error("[Service][tx.createUserTransaction] insufficient funds", {
+          accountId: sender.id,
+          balance: sender.balance,
+          amount: data.amount,
+        });
         throw new Error('INSUFFICIENT_FUNDS');
       }
 
       // 3. Handle internal transfer (same bank)
       if (data.type === 'transfer') {
-        if (!data.recipientAccountId) throw new Error('RECIPIENT_REQUIRED');
-        if (data.recipientAccountId === sender.id) throw new Error('CANNOT_TRANSFER_TO_SAME_ACCOUNT');
+        if (!data.recipientAccountId) {
+          console.error("[Service][tx.createUserTransaction] recipient required", {
+            accountId: sender.id,
+          });
+          throw new Error('RECIPIENT_REQUIRED');
+        }
+        if (data.recipientAccountId === sender.id) {
+          console.error("[Service][tx.createUserTransaction] same-account transfer blocked", {
+            accountId: sender.id,
+          });
+          throw new Error('CANNOT_TRANSFER_TO_SAME_ACCOUNT');
+        }
 
         const recipient = await tx.account.findUnique({ where: { id: data.recipientAccountId } });
-        if (!recipient) throw new Error('RECIPIENT_NOT_FOUND');
-        if (isSuspended(recipient.status)) throw new Error('RECIPIENT_SUSPENDED');
+        if (!recipient) {
+          console.error("[Service][tx.createUserTransaction] recipient not found", {
+            recipientAccountId: data.recipientAccountId,
+          });
+          throw new Error('RECIPIENT_NOT_FOUND');
+        }
+        if (isSuspended(recipient.status)) {
+          console.error("[Service][tx.createUserTransaction] recipient suspended", {
+            recipientAccountId: recipient.id,
+            status: recipient.status,
+          });
+          throw new Error('RECIPIENT_SUSPENDED');
+        }
 
         // perform atomic balance updates
         const updatedSender = await tx.account.update({
@@ -149,6 +214,11 @@ export const transactionService = {
           },
         });
 
+        console.log("[Service][tx.createUserTransaction] transfer completed", {
+          senderAccountId: sender.id,
+          recipientAccountId: recipient.id,
+          amount: data.amount,
+        });
         return { senderTx, recipientTx };
       }
 
@@ -179,6 +249,11 @@ export const transactionService = {
         await tx.account.update({ where: { id: sender.id }, data: { balance: { decrement: data.amount } } });
       }
 
+      console.log("[Service][tx.createUserTransaction] non-transfer completed", {
+        accountId: sender.id,
+        type: data.type,
+        amount: data.amount,
+      });
       return txRecord;
     });
   },
@@ -187,8 +262,15 @@ export const transactionService = {
    * Admin balance adjustment (append-only ledger entry)
    */
   async adminAdjustBalance({ accountId, amount, reason, admin, ipAddress }: AdjustBalanceInput) {
+    console.log("[Service][tx.adminAdjustBalance] start", {
+      accountId,
+      amount,
+      adminId: admin.id,
+      ipAddress,
+    });
 
     if (!reason || reason.trim().length < 5) {
+      console.error("[Service][tx.adminAdjustBalance] invalid reason", { accountId });
       throw new Error("Adjustment reason is required");
     }
 
@@ -197,7 +279,10 @@ export const transactionService = {
     return prisma.$transaction(async  (tx: Prisma.TransactionClient) => {
       // 1) Ensure account exists
       const account = await tx.account.findUnique({ where: { id: accountId } });
-      if (!account) throw new Error('ACCOUNT_NOT_FOUND');
+      if (!account) {
+        console.error("[Service][tx.adminAdjustBalance] account not found", { accountId });
+        throw new Error('ACCOUNT_NOT_FOUND');
+      }
 
       // 2) Atomically increment the account balance and obtain the new value
       const updatedAccount = await tx.account.update({
@@ -229,6 +314,11 @@ export const transactionService = {
         },
       });
 
+      console.log("[Service][tx.adminAdjustBalance] completed", {
+        accountId,
+        newBalance,
+        amount,
+      });
       return txRecord;
     });
   },
@@ -257,6 +347,18 @@ async createExternalTransfer({
     routingNumber?: string;
     description?: string;
   }) {
+    console.log("[Service][tx.createExternalTransfer] start", {
+      userId,
+      accountId,
+      amount,
+      recipientBank,
+    });
+
+    if (!accountId) {
+      console.error("[Service][tx.createExternalTransfer] missing accountId", { userId });
+      throw new Error('ACCOUNT_ID_REQUIRED');
+    }
+
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Fetch Account AND User details (to get sender's name)
       const senderAccount = await tx.account.findFirst({
@@ -264,9 +366,35 @@ async createExternalTransfer({
         include: { user: true } // <--- Key change: We now know who the user is
       });
 
-      if (!senderAccount) throw new Error('ACCOUNT_NOT_FOUND');
-      if (isSuspended(senderAccount.status)) throw new Error('ACCOUNT_SUSPENDED');
-      if (senderAccount.balance < amount) throw new Error('INSUFFICIENT_FUNDS');
+      if (!senderAccount) {
+        console.error("[Service][tx.createExternalTransfer] sender account not found", {
+          userId,
+          accountId,
+        });
+        throw new Error('ACCOUNT_NOT_FOUND');
+      }
+      if (isSuspended(senderAccount.user?.status)) {
+        console.error("[Service][tx.createExternalTransfer] blocked user suspended", {
+          userId,
+          status: senderAccount.user?.status,
+        });
+        throw new Error("USER_SUSPENDED");
+      }
+      if (isSuspended(senderAccount.status)) {
+        console.error("[Service][tx.createExternalTransfer] blocked account suspended", {
+          accountId,
+          status: senderAccount.status,
+        });
+        throw new Error('ACCOUNT_SUSPENDED');
+      }
+      if (senderAccount.balance < amount) {
+        console.error("[Service][tx.createExternalTransfer] insufficient funds", {
+          accountId,
+          balance: senderAccount.balance,
+          amount,
+        });
+        throw new Error('INSUFFICIENT_FUNDS');
+      }
 
       // 2. SIMULATE EXTERNAL BANK API CALL
       // In a real app, you would call Stripe, Wise, or a Bank API here.
@@ -317,6 +445,11 @@ async createExternalTransfer({
           },
           timestamp: new Date(),
         },
+      });
+      console.log("[Service][tx.createExternalTransfer] completed", {
+        accountId,
+        amount,
+        reference: txRecord.reference,
       });
       return txRecord;
     });

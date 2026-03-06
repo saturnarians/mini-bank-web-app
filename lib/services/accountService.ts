@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
  * - Predictable inputs only
  */
 
-  type AccountType = "checking" | "savings" | "investment";
+type AccountType = "checking" | "savings" | "investment";
 
 export const accountService = {
   /**
@@ -19,7 +19,6 @@ export const accountService = {
     accountType?: AccountType;
     balance?: number;
   }) {
-    
     const accountNumber =
       `ACC-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -48,6 +47,20 @@ export const accountService = {
           orderBy: { createdAt: "desc" },
           take: 10,
         },
+      },
+    });
+  },
+
+  async getByIdLite(accountId: string) {
+    return prisma.account.findUnique({
+      where: { id: accountId },
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+        balance: true,
+        accountNumber: true,
+        accountType: true,
       },
     });
   },
@@ -83,85 +96,95 @@ export const accountService = {
    * Admin-only suspend account
    */
   async suspend(accountId: string, reason: string, adminId: string) {
-    return await prisma.$transaction(async (tx) => {
-      // 1. Verify account exists
-      const account = await tx.account.findUnique({ where: { id: accountId } });
-      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
+    console.log("[Service][account.suspend] start", { accountId, adminId });
+    const account = await prisma.account.findUnique({ where: { id: accountId } });
+    if (!account) {
+      console.error("[Service][account.suspend] account not found", { accountId });
+      throw new Error("ACCOUNT_NOT_FOUND");
+    }
 
-      // 2. Create the Audit Log
-      await tx.accountLog.create({
-        data: {
-          accountId,
-          action: "suspended",
-          reason,
-          performedBy: adminId,
-        },
-      });
-
-      // 3. Create admin action log
-      await tx.adminActionLog.create({
-        data: {
-          adminId,
-          action: "suspend_account",
-          targetType: "account",
-          targetId: accountId,
-          reason,
-          metadata: { previousStatus: account.status },
-        },
-      });
-
-      // 4. Update the Account Status
-      const updated = await tx.account.update({
-        where: { id: accountId },
-        data: { status: "suspended" },
-      });
-
-      return updated;
+    const updated = await prisma.account.update({
+      where: { id: accountId },
+      data: { status: "suspended" },
     });
+    console.log("[Service][account.suspend] account updated", {
+      accountId,
+      previousStatus: account.status,
+      newStatus: updated.status,
+    });
+
+    await prisma.accountLog.create({
+      data: {
+        accountId,
+        action: "suspended",
+        reason,
+        performedBy: adminId,
+      },
+    });
+
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: "suspend_account",
+        targetType: "account",
+        targetId: accountId,
+        reason,
+        metadata: { previousStatus: account.status },
+      },
+    });
+
+    console.log("[Service][account.suspend] completed", { accountId, adminId });
+    return updated;
   },
 
   /**
    * Admin-only resume account
    */
   async resume(accountId: string, reason: string, adminId: string) {
-    return await prisma.$transaction(async (tx) => {
-      // 1. Verify account exists
-      const account = await tx.account.findUnique({ where: { id: accountId } });
-      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
+    console.log("[Service][account.resume] start", { accountId, adminId });
+    const account = await prisma.account.findUnique({ where: { id: accountId } });
+    if (!account) {
+      console.error("[Service][account.resume] account not found", { accountId });
+      throw new Error("ACCOUNT_NOT_FOUND");
+    }
 
-      // 2. If already active, no-op
-      if (account.status === "active") return account;
+    // If already active, no-op
+    if (account.status === "active") {
+      console.log("[Service][account.resume] no-op already active", { accountId });
+      return account as any;
+    }
 
-      // 3. Create the Audit Log
-      await tx.accountLog.create({
-        data: {
-          accountId,
-          action: "resumed",
-          reason,
-          performedBy: adminId,
-        },
-      });
-
-      // 4. Create admin action log
-      await tx.adminActionLog.create({
-        data: {
-          adminId,
-          action: "resume_account",
-          targetType: "account",
-          targetId: accountId,
-          reason,
-          metadata: { previousStatus: account.status },
-        },
-      });
-
-      // 5. Update the Account Status
-      const updated = await tx.account.update({
-        where: { id: accountId },
-        data: { status: "active" },
-      });
-
-      return updated;
+    const updated = await prisma.account.update({
+      where: { id: accountId },
+      data: { status: "active" },
     });
+
+    await prisma.accountLog.create({
+      data: {
+        accountId,
+        action: "resumed",
+        reason,
+        performedBy: adminId,
+      },
+    });
+
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: "resume_account",
+        targetType: "account",
+        targetId: accountId,
+        reason,
+        metadata: { previousStatus: account.status },
+      },
+    });
+
+    console.log("[Service][account.resume] completed", {
+      accountId,
+      previousStatus: account.status,
+      newStatus: updated.status,
+    });
+    return updated;
   },
 
   /**
@@ -171,60 +194,68 @@ export const accountService = {
     accountId: string,
     balance: number,
     reason: string,
-    adminId: string
+    adminId: string,
   ) {
-    return await prisma.$transaction(async (tx) => {
-      // 1. Verify account exists
-      const account = await tx.account.findUnique({ where: { id: accountId } });
-      if (!account) throw new Error("ACCOUNT_NOT_FOUND");
-
-      const previousBalance = account.balance;
-      const difference = balance - previousBalance;
-
-      // 2. Update account balance
-      const updated = await tx.account.update({
-        where: { id: accountId },
-        data: { balance },
-      });
-
-      // 3. Create transaction record for audit trail
-      await tx.transaction.create({
-        data: {
-          accountId,
-          userId: account.userId,
-          type: "adjustment",
-          amount: difference,
-          runningBalance: balance,
-          description: `Admin Balance Creation/Adjustment: ${reason}`,
-          status: "completed",
-          reference: `ADM-${Date.now()}`,
-          reason,
-          metadata: {
-            previousBalance,
-            newBalance: balance,
-            adminId,
-          },
-        },
-      });
-
-      // 4. Create admin action log
-      await tx.adminActionLog.create({
-        data: {
-          adminId,
-          action: "create_balance",
-          targetType: "account",
-          targetId: accountId,
-          reason,
-          metadata: {
-            previousBalance,
-            newBalance: balance,
-            difference,
-          },
-        },
-      });
-
-      return updated;
+    console.log("[Service][account.createBalance] start", {
+      accountId,
+      adminId,
+      targetBalance: balance,
     });
+    const account = await prisma.account.findUnique({ where: { id: accountId } });
+    if (!account) {
+      console.error("[Service][account.createBalance] account not found", { accountId });
+      throw new Error("ACCOUNT_NOT_FOUND");
+    }
+
+    const previousBalance = account.balance;
+    const difference = balance - previousBalance;
+
+    const updated = await prisma.account.update({
+      where: { id: accountId },
+      data: { balance },
+    });
+
+    await prisma.transaction.create({
+      data: {
+        accountId,
+        userId: account.userId,
+        type: "adjustment",
+        amount: difference,
+        runningBalance: balance,
+        description: `Admin Balance Creation/Adjustment: ${reason}`,
+        status: "completed",
+        reference: `ADM-${Date.now()}`,
+        reason,
+        metadata: {
+          previousBalance,
+          newBalance: balance,
+          adminId,
+        },
+      },
+    });
+
+    await prisma.adminActionLog.create({
+      data: {
+        adminId,
+        action: "create_balance",
+        targetType: "account",
+        targetId: accountId,
+        reason,
+        metadata: {
+          previousBalance,
+          newBalance: balance,
+          difference,
+        },
+      },
+    });
+
+    console.log("[Service][account.createBalance] completed", {
+      accountId,
+      previousBalance,
+      newBalance: balance,
+      difference,
+    });
+    return updated;
   },
 
   /**
@@ -269,7 +300,7 @@ export const accountService = {
       skip?: number;
       take?: number;
       status?: string;
-    }
+    },
   ) {
     return prisma.account.findMany({
       where: options?.status ? { status: options.status } : undefined,

@@ -1,8 +1,9 @@
-import { TransactionFormData } from '@/lib/schemas';
+import { CreateTransactionFormData } from '@/lib/schemas';
 
 // -------------------- Roles --------------------
 export type UserRole = 'superadmin' | 'admin' | 'user';
 export type KycStatus = 'not_submitted' | 'pending' | 'verified' | 'rejected';
+export type UserStatus = 'active' | 'suspended';
 
 //Account Status Types (System intention  )
 export type AccountStatus = 'active' | 'inactive' | 'closed' | 'suspended';
@@ -15,7 +16,7 @@ export type TransactionType = 'deposit' | 'withdrawal' | 'transfer' | 'adjustmen
 export type TransactionApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 
-export type CreateTransactionPayload = TransactionFormData & {
+export type CreateTransactionPayload = CreateTransactionFormData & {
   accountId: string; // source account
 };
 
@@ -62,7 +63,9 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  status?: UserStatus;
   emailVerified: boolean;
+  hasTransactionPin?: boolean;
   phone?: string;
   address?: string;
   profilePhotoUrl?: string;

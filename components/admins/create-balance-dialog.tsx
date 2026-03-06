@@ -45,6 +45,7 @@ export function CreateBalanceDialog({
       const response = await fetch('/api/admin/accounts/create-balance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           accountId: account.id,
           balance: balanceNum,
@@ -52,19 +53,26 @@ export function CreateBalanceDialog({
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create balance');
+      const raw = await response.text();
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            data?.message ||
+            `Failed to create balance (HTTP ${response.status}). ${raw.slice(0, 120)}`
+        );
+      }
       setSuccess(true);
       setBalance('');
       setReason('');
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess?.();
-      }, 2000);
+      onOpenChange(false);
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

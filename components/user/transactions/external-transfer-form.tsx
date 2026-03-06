@@ -1,9 +1,6 @@
 'use client'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useCreateExternalTransferMutation } from '@/store/services/transactionsApi'
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import {
@@ -15,7 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ExternalTransferFormData, externalTransferSchema } from '@/lib/schemas';
+import { ExternalTransferFormData, externalTransferFormSchema } from '@/lib/schemas';
 
 
 interface ExternalTransferFormProps {
@@ -32,10 +29,8 @@ export function ExternalTransferForm({
   onCancel,
  }: ExternalTransferFormProps) {
 
-  const { toast } = useToast();
-
   const form = useForm<ExternalTransferFormData>({
-  resolver: zodResolver(externalTransferSchema),
+  resolver: zodResolver(externalTransferFormSchema),
   defaultValues: {
     amount: undefined,              // user must enter
     recipientBank: '',
@@ -49,8 +44,6 @@ export function ExternalTransferForm({
   },
 });
 
-
-  console.log('errors', form.formState.errors);
   return (
 <Form 
 {...form}

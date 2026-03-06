@@ -25,7 +25,10 @@ export const GET = authorize(['admin', 'superadmin'], async (req) => {
       id: true,
       email: true,
       name: true,
+      phone: true,
+      address: true,
       role: true,
+      status: true,
       createdAt: true,
       accounts: { select: { id: true, balance: true } }
     },

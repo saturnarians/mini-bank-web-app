@@ -1,4 +1,4 @@
-import AdminTransactionsPageClient from './transactions-page-client';
+import AdminTransactionsPageClient from '@/components/admins/transactions-page-client';
 
 export const dynamic = 'force-dynamic';
 

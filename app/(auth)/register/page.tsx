@@ -48,6 +48,7 @@ export default function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      transactionPin: "",
       accountType: "checking", // Default value
     },
   });
@@ -151,6 +152,27 @@ export default function RegisterForm() {
                   <FormLabel>Password</FormLabel>
                   <FormControl>
                     <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Confirm Password Field */}
+            <FormField
+              control={form.control}
+              name="transactionPin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Transaction PIN (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      placeholder="4-digit PIN"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

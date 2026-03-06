@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { AuthGuard } from '@/components/auth-guard';
 import { AppSidebar } from '@/components/shared/app-sidebar';
 import { DashboardHeader } from '@/components/shared/dashboard-header';
+import { SuspendedUserGate } from '@/components/shared/suspended-user-gate';
 import { RoleGuard }from '@/components/roleGuard';
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function DashboardLayout({
         <div className="flex-1 md:ml-0">
           <DashboardHeader />
           <main className="p-6">
-            {children}
+            <SuspendedUserGate>{children}</SuspendedUserGate>
           </main>
         </div>
       </div>

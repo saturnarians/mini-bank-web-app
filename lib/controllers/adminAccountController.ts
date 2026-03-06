@@ -35,7 +35,7 @@ export const adminAccountController = {
       const { accountId, reason } = suspendAccountSchema.parse(body);
 
       // Verify account exists and get details
-      const account = await accountService.getById(accountId);
+      const account = await accountService.getByIdLite(accountId);
       if (!account) {
         return NextResponse.json(
           { error: "Account not found" },
@@ -86,7 +86,7 @@ export const adminAccountController = {
       const { accountId, reason } = resumeAccountSchema.parse(body);
 
       // Verify account exists
-      const account = await accountService.getById(accountId);
+      const account = await accountService.getByIdLite(accountId);
       if (!account) {
         return NextResponse.json(
           { error: "Account not found" },
@@ -137,7 +137,7 @@ export const adminAccountController = {
       const { accountId, balance, reason } = createBalanceSchema.parse(body);
 
       // Verify account exists
-      const account = await accountService.getById(accountId);
+      const account = await accountService.getByIdLite(accountId);
       if (!account) {
         return NextResponse.json(
           { error: "Account not found" },

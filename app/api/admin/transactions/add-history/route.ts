@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 export const dynamic = 'force-dynamic';
+const ADMIN_TX_OPTIONS = { maxWait: 10000, timeout: 60000 };
 
 
 const addTransactionHistorySchema = z.object({
@@ -58,10 +59,60 @@ export const POST = authorize(
 
       // Create the historical transaction within a transaction
       const transaction = await prisma.$transaction(async (tx) => {
+        const senderAccount = await tx.account.findUnique({
+          where: { id: data.accountId },
+        });
+
+        if (!senderAccount) {
+          throw new Error("ACCOUNT_NOT_FOUND");
+        }
+
+        let senderDelta = 0;
+        if (data.type === "deposit" || data.type === "adjustment") senderDelta = data.amount;
+        if (data.type === "withdrawal" || data.type === "transfer") senderDelta = -data.amount;
+
+        const updatedSender = await tx.account.update({
+          where: { id: senderAccount.id },
+          data: { balance: { increment: senderDelta } },
+        });
+
+        let recipientTxId: string | null = null;
+        if (data.type === "transfer" && data.recipientAccountId) {
+          const updatedRecipient = await tx.account.update({
+            where: { id: data.recipientAccountId },
+            data: { balance: { increment: data.amount } },
+          });
+
+          const recipientTx = await tx.transaction.create({
+            data: {
+              accountId: data.recipientAccountId,
+              userId: updatedRecipient.userId,
+              type: "transfer",
+              amount: data.amount,
+              description: `Incoming historical transfer`,
+              timestamp: new Date(data.timestamp),
+              status: "completed",
+              approvalStatus: "approved",
+              reference: `HIST-IN-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              runningBalance: updatedRecipient.balance,
+              isHistorical: true,
+              metadata: {
+                addedByAdmin: session.id,
+                historicalEntry: true,
+                reason: data.reason,
+                direction: "in",
+                sourceAccountId: data.accountId,
+              },
+            },
+          });
+          recipientTxId = recipientTx.id;
+        }
+
         // Create the transaction record
         const txRecord = await tx.transaction.create({
           data: {
             accountId: data.accountId,
+            userId: senderAccount.userId,
             type: data.type,
             amount: data.amount,
             description: data.description,
@@ -69,12 +120,15 @@ export const POST = authorize(
             status: 'completed',
             approvalStatus: 'approved', // Historical transactions are auto-approved
             recipientAccountId: data.recipientAccountId,
-            reference: `HIST-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            runningBalance: account.balance,
+            reference: `HIST-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            runningBalance: updatedSender.balance,
+            isHistorical: true,
             metadata: {
               addedByAdmin: session.id,
               historicalEntry: true,
               reason: data.reason,
+              direction: data.type === "deposit" ? "in" : "out",
+              recipientHistoricalTransactionId: recipientTxId,
             },
           },
         });
@@ -96,7 +150,7 @@ export const POST = authorize(
         });
 
         return txRecord;
-      });
+      }, ADMIN_TX_OPTIONS);
 
       return NextResponse.json(
         {
@@ -107,6 +161,12 @@ export const POST = authorize(
       );
     } catch (error: any) {
       console.error("Add transaction history error:", error);
+      if (error?.message === "ACCOUNT_NOT_FOUND") {
+        return NextResponse.json(
+          { error: "Account not found" },
+          { status: 404 }
+        );
+      }
       
       if (error.name === 'ZodError') {
         return NextResponse.json(

@@ -9,7 +9,14 @@ export default function AccountsPageClient() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
-  const { data: accounts = [], isLoading } = useGetAccountsQuery({});
+  const { data: accounts = [], isLoading } = useGetAccountsQuery(
+    {},
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
   const [adjustBalance] = useAdjustBalanceMutation();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(

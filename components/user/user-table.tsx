@@ -41,6 +41,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="w-10">Actions</TableHead>
           </TableRow>
@@ -55,6 +56,17 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
                 <TableCell>
                   <Badge className={roleColor[user.role]}>
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={
+                      user.status === 'suspended'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    }
+                  >
+                    {user.status === 'suspended' ? 'Suspended' : 'Active'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
@@ -86,7 +98,7 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                 No users found
               </TableCell>
             </TableRow>

@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         emailVerified: true,
+        transactionPinHash: true,
       },
     });
 
@@ -56,7 +57,14 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       message: "Email verified successfully.",
-      user: verifiedUser,
+      user: {
+        id: verifiedUser.id,
+        name: verifiedUser.name,
+        email: verifiedUser.email,
+        role: verifiedUser.role,
+        emailVerified: verifiedUser.emailVerified,
+        hasTransactionPin: !!verifiedUser.transactionPinHash,
+      },
     });
     setTokenCookie(response, accessToken, 20 * 60);
     clearVerificationCookie(response);

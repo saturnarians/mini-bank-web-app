@@ -32,7 +32,10 @@ export const POST = authorize(
     try {
       const body = await req.json();
       const accountId = body?.accountId;
-      assertTransactionPin(body?.pin);
+      await assertTransactionPin({
+        userId: session.id,
+        pin: body?.pin,
+      });
 
       if (!accountId) {
         return NextResponse.json(
@@ -67,6 +70,11 @@ export const POST = authorize(
             { error: error.message, message: 'Account is suspended and cannot make transactions.' },
             { status: 403 }
           );
+        case 'USER_SUSPENDED':
+          return NextResponse.json(
+            { error: error.message, message: 'User account is suspended and cannot make transactions.' },
+            { status: 403 }
+          );
         case 'RECIPIENT_NOT_FOUND':
           return NextResponse.json(
             { error: error.message, message: 'Recipient account not found.' },
@@ -96,6 +104,19 @@ export const POST = authorize(
           return NextResponse.json(
             { error: error.message, message: 'Invalid transaction PIN.' },
             { status: 403 }
+          );
+        case 'TRANSACTION_PIN_NOT_SET':
+          return NextResponse.json(
+            {
+              error: error.message,
+              message: 'Transaction PIN not set. Create your PIN to continue.',
+            },
+            { status: 428 }
+          );
+        case 'USER_NOT_FOUND':
+          return NextResponse.json(
+            { error: error.message, message: 'User not found.' },
+            { status: 404 }
           );
         default:
           console.error('Create transaction error:', error);

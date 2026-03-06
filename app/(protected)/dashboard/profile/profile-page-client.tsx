@@ -9,7 +9,7 @@ import { ProfileForm } from '@/components/user/profile/profile-form';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, MapPin, Calendar, Shield, Upload, FileText, Camera, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Shield, Upload, FileText, Camera, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -246,7 +246,7 @@ export default function ProfilePage() {
               </p>
               <p className="font-mono text-sm">{user.id}</p>
             </div>
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Member Since
@@ -258,7 +258,7 @@ export default function ProfilePage() {
                   day: 'numeric',
                 })}
               </p>
-            </div>
+            </div> */}
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Shield className="h-4 w-4" />

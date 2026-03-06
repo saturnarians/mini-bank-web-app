@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { Transaction, CreateTransactionPayload } from '@/lib/types';
-import type { TransactionFormData } from '@/lib/schemas';
+import type { CreateTransactionFormData } from '@/lib/schemas';
 import { computeBalance } from '@/lib/domain/ledger/computeBalance';
 
 // Helper to build optimistic transaction
 function buildOptimisticTransaction(
-  body: TransactionFormData & { accountId: string }
+  body: CreateTransactionFormData & { accountId: string }
 ): Transaction {
   return {
     id: `temp-${Date.now()}`,
@@ -18,7 +18,7 @@ function buildOptimisticTransaction(
     description: body.description,
     accountId: body.accountId,
     recipientAccountId: body.recipientAccountId,
-    runningBalance: body.runningBalance || 0,
+    runningBalance: 0,
     direction: body.type === 'deposit' ? 'in' : 'out',
   };
 }
