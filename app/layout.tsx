@@ -23,29 +23,18 @@ export const metadata: Metadata = {
     template: '%s | Mini Bank',
   },
   description: 'Your modern banking solution with enhanced security and seamless transactions',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://yourdomain.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://patheonbk.com'),
   icons: {
     icon: [
       {
-        url: '/favicon.ico',
-        sizes: 'any',
-      },
-      {
         url: '/icon.png',
         type: 'image/png',
-        sizes: '32x32',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark.png',
-        type: 'image/png',
-        sizes: '32x32',
-        media: '(prefers-color-scheme: dark)',
+        sizes: '512x512',
       },
     ],
     apple: [
       {
-        url: '/apple-icon.png',
+        url: '/icon.png',
         sizes: '180x180',
         type: 'image/png',
       },

@@ -53,12 +53,23 @@ export function ContactSection() {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Form submitted:", data)
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!res.ok) {
+        throw new Error("Failed to submit contact form")
+      }
+
       setSubmitSuccess(true)
       reset()
       setTimeout(() => setSubmitSuccess(false), 3000)
+    } catch (error) {
+      console.error("Contact form submission failed:", error)
     } finally {
       setIsSubmitting(false)
     }
