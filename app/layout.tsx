@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { ReduxProvider } from '@/providers/reduxProviders';
 import { ThemeProvider } from '@/providers/themeProviders';
+import ChatwootWidget from '@/components/ChatwootWidget';
 import './styles/globals.css';
 
 const geistSans = Geist({
@@ -118,6 +119,7 @@ export default function RootLayout({
             <main className="relative flex min-h-screen flex-col">
               {children}
             </main>
+            <ChatwootWidget />
           </ReduxProvider>
         </ThemeProvider>
         <Analytics />
