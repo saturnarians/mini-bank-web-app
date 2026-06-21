@@ -27,6 +27,8 @@ node_modules/
 *.iws
 *.ipr
 .history/
+.codex
+.agents
 
 # Debug
 npm-debug.log*
