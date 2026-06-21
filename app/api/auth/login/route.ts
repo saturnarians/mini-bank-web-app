@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authController } from '@/lib/controllers/authController';
 import { ZodError } from 'zod';
-import { setTokenCookie } from '@/lib/auth';
+import { setTokenCookie, signToken } from '@/lib/auth';
 import { loginSchema } from '@/lib/schemas';
 import { sendVerificationOtpAndSetCookie } from '@/lib/emailVerification';
 
@@ -21,13 +21,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = loginSchema.parse(payload);
-    const { user, token, expiresIn } = await authController.login(body);
+    const { user } = await authController.login(body);
 
-    if (!user.emailVerified) {
+    const requiresEmailOtp = user.role === "user";
+
+    if (requiresEmailOtp) {
       const response = NextResponse.json(
         {
-          error: 'EMAIL_NOT_VERIFIED',
-          message: 'Email is not verified. We sent a new OTP to your inbox.',
+          error: 'EMAIL_VERIFICATION_REQUIRED',
+          message: 'Please verify your email with the code sent to your inbox.',
           requiresVerification: true,
           email: user.email,
         },
@@ -42,6 +44,15 @@ export async function POST(request: NextRequest) {
 
       return response;
     }
+
+    const expiresIn = 20 * 60;
+    const token = await signToken({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      emailVerified: user.emailVerified,
+    });
 
     const isSuspended = (user.status ?? "").toLowerCase() === "suspended";
     const response = NextResponse.json(

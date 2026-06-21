@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.emailVerified) {
-      return NextResponse.json({ message: 'Email already verified' });
+    if (user.role !== "user") {
+      return NextResponse.json({ message: 'Verification is not required for this account type.' });
     }
 
     const response = NextResponse.json({
